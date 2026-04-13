@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect — Multidisciplinary Care Concept</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #F4F6F9;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const BLUE = "#0596DE";
+const DARK = "#073B5A";
+const GREEN = "#1B9E5A";
+const ORANGE = "#E67E22";
+const PURPLE = "#7C3AED";
+const TEAL = "#0D9488";
+const RED = "#DC2626";
+
+// Unsplash photos — free license, face-cropped professional headshots
+const photos = {
+  gp:      "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face&q=80",
+  endo:    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face&q=80",
+  diet:    "https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?w=150&h=150&fit=crop&crop=face&q=80",
+  nurse:   "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face&q=80",
+  patient: "https://images.unsplash.com/photo-1566616213894-2d4e1baee5d8?w=150&h=150&fit=crop&crop=face&q=80",
+};
+
+const practitioners = {
+  gp:    { name: "Dr. Moreau",  role: "General Practitioner",      color: BLUE,   bg: "#E8F4FD" },
+  endo:  { name: "Dr. Chen",    role: "Endocrinologist",            color: ORANGE, bg: "#FFF3E0" },
+  diet:  { name: "S. Dupont",   role: "Dietitian",                  color: TEAL,   bg: "#ECFDF5" },
+  nurse: { name: "A. Bernard",  role: "Nurse Educator",              color: PURPLE, bg: "#F3EEFF" },
+};
+
+const steps = [
+  { label: "Diagnosis",  short: "1" },
+  { label: "Referrals",  short: "2" },
+  { label: "Progress",   short: "3" },
+  { label: "Incidents",  short: "4" },
+  { label: "MDT Review", short: "5" },
+];
+
+const carePlanSteps = [
+  { label: "Care Plan v1",   updated: "Created by Dr. Moreau",   items: "Initial diagnosis · Referrals pending" },
+  { label: "Care Plan v1",   updated: "3 specialists assigned",  items: "Metabolic mgmt · Nutrition · Self-mgmt training" },
+  { label: "Care Plan v2",   updated: "Updated with results",    items: "Metformin adjusted · Meal plan active · Logging 2x daily" },
+  { label: "Care Plan v2.1", updated: "Flag addressed",          items: "Weekend plan simplified · Monitoring continues" },
+  { label: "Care Plan v3",   updated: "Q2 MDT review",           items: "Targets met · Exercise consult added · Next review: Oct" },
+];
+
+const cardSteps = [
+  { status: "New",       sc: BLUE,   sb: "#E8F4FD", hba1c: "8.2%", bp: "145/92",  adh: "—",   team: ["gp"],                      cp: "new" },
+  { status: "Active",    sc: GREEN,  sb: "#E8F8F0", hba1c: "8.2%", bp: "145/92",  adh: "—",   team: ["gp","endo","diet","nurse"], cp: "updated" },
+  { status: "Active",    sc: GREEN,  sb: "#E8F8F0", hba1c: "7.4%", bp: "138/88",  adh: "82%", team: ["gp","endo","diet","nurse"], cp: "updated" },
+  { status: "Active",    sc: GREEN,  sb: "#E8F8F0", hba1c: "7.1%", bp: "135/86",  adh: "78%", team: ["gp","endo","diet","nurse"], cp: "updated", adhWarn: true },
+  { status: "Active",    sc: GREEN,  sb: "#E8F8F0", hba1c: "7.1%", bp: "130/82",  adh: "85%", team: ["gp","endo","diet","nurse"], cp: "reviewed" },
+];
+
+// ─── Components ───
+
+function PhotoAvatar({ who, size = 36, borderColor }) {
+  const bc = borderColor || practitioners[who]?.color || BLUE;
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", overflow: "hidden",
+      flexShrink: 0, border: `2px solid ${bc}`,
+    }}>
+      <img src={photos[who]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+    </div>
+  );
+}
+
+function SmallPhoto({ who, active }) {
+  if (!active) return null;
+  const p = practitioners[who];
+  return (
+    <div style={{
+      width: 28, height: 28, borderRadius: "50%", overflow: "hidden",
+      border: `2px solid ${p.color}`,
+      marginRight: -6, flexShrink: 0,
+      animation: "fadeIn 0.4s ease",
+    }}>
+      <img src={photos[who]} alt="" style={{
+        width: "100%", height: "100%", objectFit: "cover", display: "block",
+      }} />
+    </div>
+  );
+}
+
+function RoleBadge({ who }) {
+  const p = practitioners[who];
+  return (
+    <span style={{
+      display: "inline-block", padding: "2px 8px", borderRadius: 4,
+      fontSize: 9, fontWeight: 600, background: p.bg, color: p.color,
+      textTransform: "uppercase", letterSpacing: 0.4,
+    }}>{p.role}</span>
+  );
+}
+
+function Message({ who, text, time, delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  const p = practitioners[who];
+
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+
+  return (
+    <div style={{
+      display: "flex", gap: 10, padding: "10px 0",
+      opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)",
+      transition: "all 0.4s ease",
+    }}>
+      <PhotoAvatar who={who} size={36} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#2D3340" }}>{p.name}</span>
+          <RoleBadge who={who} />
+          <span style={{ fontSize: 10, color: "#9BA3B0", marginLeft: "auto" }}>{time}</span>
+        </div>
+        <div style={{ fontSize: 13, color: "#3D4551", lineHeight: 1.55, marginTop: 4 }}>
+          {text}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Divider({ text, delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "10px 0",
+      opacity: visible ? 1 : 0, transition: "opacity 0.3s ease",
+    }}>
+      <div style={{ flex: 1, height: 1, background: "#E2E6EC" }} />
+      <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6, color: "#9BA3B0", whiteSpace: "nowrap" }}>{text}</span>
+      <div style={{ flex: 1, height: 1, background: "#E2E6EC" }} />
+    </div>
+  );
+}
+
+function Tag({ text, bg, color }) {
+  return (
+    <span style={{
+      display: "inline-block", marginTop: 4, marginRight: 4,
+      background: bg, color, padding: "2px 8px",
+      borderRadius: 4, fontWeight: 600, fontSize: 11,
+    }}>{text}</span>
+  );
+}
+
+// ─── Patient Card ───
+
+function PatientCard({ step }) {
+  const c = cardSteps[step];
+  const imp = (v, o) => v !== o && v !== "—";
+
+  return (
+    <div style={{ padding: "14px 20px", background: "#F8F9FB", borderBottom: "1px solid #E2E6EC" }}>
+      <div style={{ background: "white", border: "1px solid #E2E6EC", borderRadius: 12, padding: "14px 16px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <PhotoAvatar who="patient" size={40} borderColor={BLUE} />
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#2D3340" }}>Marie Laurent</div>
+            <div style={{ fontSize: 11, color: "#737D8C", marginTop: 1 }}>58 yrs · Type 2 Diabetes Mellitus</div>
+          </div>
+          <span style={{
+            marginLeft: "auto", display: "inline-block", padding: "2px 10px", borderRadius: 20,
+            fontSize: 10, fontWeight: 600, background: c.sb, color: c.sc,
+          }}>{c.status}</span>
+        </div>
+
+        {/* Metrics */}
+        <div style={{ display: "flex", gap: 6 }}>
+          {[
+            { label: "HbA1c", value: c.hba1c, orig: "8.2%", warn: false },
+            { label: "Blood Pressure", value: c.bp, orig: "145/92", warn: false },
+            { label: "Adherence", value: c.adh, orig: "—", warn: !!c.adhWarn },
+          ].map(m => (
+            <div key={m.label} style={{ flex: 1, background: m.warn ? "#FEF2F2" : "#F8F9FB", borderRadius: 8, padding: "7px 8px", textAlign: "center", transition: "background 0.4s" }}>
+              <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#9BA3B0", marginBottom: 2 }}>{m.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: m.warn ? RED : imp(m.value, m.orig) ? GREEN : "#2D3340", transition: "color 0.4s" }}>{m.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Team + Care Plan row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 2, marginTop: 10, paddingTop: 10, borderTop: "1px solid #F1F3F6" }}>
+          {["gp","endo","diet","nurse"].map(who => (
+            <SmallPhoto key={who} who={who} active={c.team.includes(who)} />
+          ))}
+          <span style={{ fontSize: 10, color: "#9BA3B0", marginLeft: 14 }}>
+            {c.team.length} {c.team.length === 1 ? "member" : "members"}
+          </span>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontSize: 10, color: "#9BA3B0" }}>📋 Care Plan</span>
+            <span style={{
+              display: "inline-block", width: 8, height: 8, borderRadius: "50%",
+              background: c.cp === "new" ? BLUE : c.cp === "updated" ? GREEN : c.cp === "reviewed" ? ORANGE : "#9BA3B0",
+            }} />
+            <span style={{
+              fontSize: 9, fontWeight: 600,
+              color: c.cp === "new" ? BLUE : c.cp === "updated" ? GREEN : c.cp === "reviewed" ? ORANGE : "#9BA3B0",
+            }}>{c.cp === "new" ? "New" : c.cp === "updated" ? "Updated" : c.cp === "reviewed" ? "Reviewed" : "Active"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Step Content ───
+
+function ConsultationBanner({ delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+      background: "#F0F4FF", borderRadius: 10, margin: "6px 0",
+      opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(8px)",
+      transition: "all 0.4s ease",
+    }}>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        <PhotoAvatar who="gp" size={28} style={{ border: "2px solid white", zIndex: 2 }} />
+        <PhotoAvatar who="patient" size={28} style={{ marginLeft: -8, border: "2px solid white", zIndex: 1 }} />
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: DARK }}>Consultation · 45 min</div>
+        <div style={{ fontSize: 11, color: "#6B7280" }}>Dr. P. Martin with Marie Laurent</div>
+      </div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 4,
+        padding: "4px 8px", borderRadius: 6, background: "#E8F8F0",
+      }}>
+        <span style={{ fontSize: 14 }}>🩺</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: GREEN }}>Completed</span>
+      </div>
+    </div>
+  );
+}
+
+function Step1() {
+  return (
+    <>
+      <ConsultationBanner delay={100} />
+      <Message who="gp" time="9:04 AM" delay={500}
+        text={<>Following Marie's consultation — diagnosed Type 2 Diabetes, HbA1c at 8.2%, BP 145/92. She needs a multidisciplinary approach. Creating her care plan now.<br/><Tag text="Care plan created" bg="#E8F4FD" color={BLUE} /></>}
+      />
+    </>
+  );
+}
+
+function Step2() {
+  return (
+    <>
+      <Message who="gp" time="9:04 AM" delay={200}
+        text={<>Hi team — I'm referring Marie Laurent to the three of you for multidisciplinary diabetes management. Her file is up to date with diagnosis, labs and history. Let me know once you've reviewed.<br/><Tag text="3 referrals sent" bg="#E8F4FD" color={BLUE} /></>}
+      />
+      <Message who="endo" time="10:22 AM" delay={500}
+        text="Received the referral. I'll take on metabolic management — reviewing Marie's history now. Scheduling her for next Tuesday."
+      />
+      <Message who="diet" time="11:15 AM" delay={700}
+        text="Thanks Dr. Moreau. I'll build a structured Mediterranean meal plan, 1500 kcal target. Setting up compliance tracking for the team."
+      />
+      <Message who="nurse" time="11:48 AM" delay={1100}
+        text="I'll onboard Marie for self-management training — glucose logging, injection technique, hypo recognition. Starting this week."
+      />
+    </>
+  );
+}
+
+function Step3() {
+  return (
+    <>
+      <Divider text="6 weeks later — Results shared" delay={100} />
+      <Message who="endo" time="Tue 3:10 PM" delay={300}
+        text={<>Adjusted metformin dosage. Good trajectory — next check in 8 weeks.<br/><Tag text="HbA1c → 7.4% ↓" bg="#E8F8F0" color={GREEN} /> <Tag text="BP → 138/88" bg="#E8F8F0" color={GREEN} /></>}
+      />
+      <Message who="diet" time="Wed 9:30 AM" delay={700}
+        text={<>Marie's meal plan is going well. She's struggling with weekends — adding flexible swaps for Saturdays.<br/><Tag text="Adherence at 82%" bg="#E8F8F0" color={GREEN} /></>}
+      />
+      <Message who="nurse" time="Thu 11:00 AM" delay={1100}
+        text="Self-management training complete. Marie is logging glucose twice daily and monitoring her blood pressure at home."
+      />
+    </>
+  );
+}
+
+function Step4() {
+  return (
+    <>
+      <Divider text="Ongoing care coordination" delay={100} />
+      <Message who="nurse" time="Mon 8:15 AM" delay={300}
+        text={<>Heads up — Marie missed 3 glucose logs last week.<br/><Tag text="⚠ Flagged for follow-up" bg="#FEF2F2" color={RED} /></>}
+      />
+      <Message who="gp" time="Mon 9:02 AM" delay={700}
+        text={<>Thanks for flagging. I'll check in at our Thursday appointment. Could be the weekend issue again — <span style={{ color: BLUE, fontWeight: 600, cursor: "pointer" }}>@S. Dupont</span>, any ideas?</>}
+      />
+      <Message who="diet" time="Mon 9:20 AM" delay={1100}
+        text="Likely related. I'll simplify the weekend plan and send Marie a reminder template. Sometimes it's just routine friction."
+      />
+    </>
+  );
+}
+
+function CheckItem({ text, checked = false, delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0",
+      opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(6px)",
+      transition: "all 0.3s ease",
+    }}>
+      <div style={{
+        width: 16, height: 16, borderRadius: 4, flexShrink: 0, marginTop: 1,
+        border: checked ? "none" : `1.5px solid ${BLUE}`,
+        background: checked ? BLUE : "white",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {checked && <span style={{ color: "white", fontSize: 10, fontWeight: 700 }}>✓</span>}
+      </div>
+      <span style={{ fontSize: 12, color: "#3D4551", lineHeight: 1.4 }}>{text}</span>
+    </div>
+  );
+}
+
+function VideoCallBanner({ delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+      background: "#F0F4FF", borderRadius: 10, margin: "6px 0",
+      opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(8px)",
+      transition: "all 0.4s ease",
+    }}>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        {["gp","endo","nurse"].map((who, i) => (
+          <PhotoAvatar key={who} who={who} size={28} style={{
+            marginLeft: i > 0 ? -8 : 0, border: "2px solid white", position: "relative", zIndex: 3 - i,
+          }} />
+        ))}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: DARK }}>Video call · 30 min</div>
+        <div style={{ fontSize: 11, color: "#6B7280" }}>Dr. P. Martin, Dr. J. Moreau, C. Leroy</div>
+      </div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 4,
+        padding: "4px 8px", borderRadius: 6, background: "#E8F8F0",
+      }}>
+        <span style={{ fontSize: 14 }}>📹</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: GREEN }}>Completed</span>
+      </div>
+    </div>
+  );
+}
+
+function Step5() {
+  return (
+    <>
+      <Divider text="Quarterly MDT meeting" delay={100} />
+      <VideoCallBanner delay={300} />
+      <Message who="gp" time="Today 2:32 PM" delay={700}
+        text="Great meeting today, here are the agreed action items:"
+      />
+      <div style={{
+        marginTop: 8, padding: "12px 14px", background: "#F8F9FB",
+        borderRadius: 10, border: `1px solid #E2E6EC`,
+      }}>
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: DARK }}>Next steps</span>
+        </div>
+        <CheckItem text="Continue current medication regime" delay={900} />
+        <CheckItem text="Add exercise physiology consult for Q3" delay={1100} />
+        <CheckItem text="Discuss insulin tapering if Q3 trend holds" delay={1300} />
+        <CheckItem text="Update self-management goals to new targets" delay={1500} />
+        <CheckItem text="Next MDT review scheduled for October" delay={1700} />
+      </div>
+    </>
+  );
+}
+
+const stepComponents = [Step1, Step2, Step3, Step4, Step5];
+
+// ─── Main App ───
+
+function App() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+
+  function goTo(i) {
+    setCurrentStep(i);
+    setAnimKey(k => k + 1);
+  }
+
+  const StepContent = stepComponents[currentStep];
+
+  return (
+    <div style={{
+      width: 520, height: 780, background: "white", borderRadius: 16,
+      boxShadow: "0 16px 48px rgba(7,59,90,0.12), 0 0 0 1px rgba(0,0,0,0.04)",
+      display: "flex", flexDirection: "column", overflow: "hidden",
+    }}>
+      {/* Title bar */}
+      <div style={{
+        height: 48, background: DARK, display: "flex", alignItems: "center",
+        padding: "0 20px", gap: 10, flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: "white", letterSpacing: -0.3 }}>Connect</span>
+        <div style={{ flex: 1 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: GREEN }} />
+          <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+            {cardSteps[currentStep].team.length} online
+          </span>
+        </div>
+      </div>
+
+      {/* Patient card */}
+      <PatientCard step={currentStep} />
+
+      {/* Chat area */}
+      <div key={animKey} style={{
+        flex: 1, overflowY: "auto", padding: "8px 20px",
+        display: "flex", flexDirection: "column",
+      }}>
+        <StepContent />
+      </div>
+
+      {/* Step navigation */}
+      <div style={{ borderTop: "1px solid #E2E6EC", padding: "12px 16px 14px", background: "white", flexShrink: 0 }}>
+        {/* Progress bar */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+          {steps.map((_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 3, borderRadius: 2,
+              background: i <= currentStep ? BLUE : "#E2E6EC",
+              transition: "background 0.3s",
+            }} />
+          ))}
+        </div>
+
+        {/* Step buttons */}
+        <div style={{ display: "flex", gap: 6 }}>
+          {steps.map((s, i) => (
+            <button key={i} onClick={() => goTo(i)} style={{
+              flex: 1, padding: "8px 4px", borderRadius: 8,
+              border: i === currentStep ? `2px solid ${BLUE}` : "2px solid transparent",
+              background: i === currentStep ? "#E8F4FD" : "#F8F9FB",
+              cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: i === currentStep ? BLUE : "#9BA3B0" }}>{s.short}</span>
+              <span style={{ fontSize: 9, fontWeight: 500, color: i === currentStep ? BLUE : "#9BA3B0" }}>{s.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Nav arrows */}
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+          <button onClick={() => currentStep > 0 && goTo(currentStep - 1)} style={{
+            padding: "6px 16px", borderRadius: 6, border: "1px solid #E2E6EC",
+            background: "white", fontSize: 12, fontWeight: 500, color: "#3D4551",
+            cursor: currentStep > 0 ? "pointer" : "default",
+            opacity: currentStep > 0 ? 1 : 0.3, fontFamily: "inherit",
+          }}>← Previous</button>
+          <button onClick={() => currentStep < 4 && goTo(currentStep + 1)} style={{
+            padding: "6px 16px", borderRadius: 6, border: "none",
+            background: currentStep < 4 ? BLUE : "#9BA3B0",
+            fontSize: 12, fontWeight: 600, color: "white",
+            cursor: currentStep < 4 ? "pointer" : "default", fontFamily: "inherit",
+          }}>{currentStep < 4 ? "Next →" : "Done ✓"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
