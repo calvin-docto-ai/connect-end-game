@@ -62,7 +62,7 @@ const steps = [
 ];
 
 const cardSteps = [
-  { status: "—",          sc: "#9BA3B0", sb: "#F3F4F6", wound: "—",           abi: "—",    hba1c: "9.1%", team: [],                                             cp: "none" },
+  { status: "At Risk",    sc: RED,       sb: "#FEF2F2", wound: "—",           abi: "—",    hba1c: "9.1%", team: [],                                             cp: "none" },
   { status: "Urgent",     sc: RED,       sb: "#FEF2F2", wound: "Wagner 2",    abi: "—",    hba1c: "9.1%", team: ["gp"],                                          cp: "new" },
   { status: "Active",     sc: ORANGE,    sb: "#FFF3E0", wound: "Wagner 2",    abi: "0.55", hba1c: "9.1%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
   { status: "Active",     sc: GREEN,     sb: "#E8F8F0", wound: "Improving",   abi: "0.88", hba1c: "8.2%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
@@ -209,8 +209,6 @@ function CheckItem({ text, checked = false, delay = 0 }) {
 
 function PatientCard({ step }) {
   const c = cardSteps[step];
-  if (step === 0) return null; // No patient card on the problem slide
-
   return (
     <div style={{ padding: "14px 20px", background: "#F8F9FB", borderBottom: "1px solid #E2E6EC" }}>
       <div style={{ background: "white", border: "1px solid #E2E6EC", borderRadius: 12, padding: "14px 16px" }}>
@@ -269,16 +267,13 @@ function PatientCard({ step }) {
 
 function Step1() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 0, height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {/* Hero stats */}
       <div style={{
         background: "linear-gradient(135deg, #073B5A 0%, #0B4D73 100%)",
-        borderRadius: 12, padding: "20px 22px", margin: "6px 0 10px",
+        borderRadius: 12, padding: "20px 22px", margin: "6px 0 0",
         color: "white",
       }}>
-        <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, color: "rgba(255,255,255,0.5)", marginBottom: 14 }}>
-          The scale of the problem
-        </div>
         <div style={{ display: "flex", gap: 12 }}>
           <div style={{ flex: 1, textAlign: "center" }}>
             <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
@@ -287,7 +282,6 @@ function Step1() {
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.3 }}>
               people in the EU<br/>with diabetes
             </div>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>~10% of population</div>
           </div>
           <div style={{ width: 1, background: "rgba(255,255,255,0.15)" }} />
           <div style={{ flex: 1, textAlign: "center" }}>
@@ -295,9 +289,8 @@ function Step1() {
               <AnimatedNumber target={100} suffix="K" delay={600} />
             </div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.3 }}>
-              diabetes-related<br/>amputations / year
+              amputations<br/>per year
             </div>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>in the EU alone</div>
           </div>
           <div style={{ width: 1, background: "rgba(255,255,255,0.15)" }} />
           <div style={{ flex: 1, textAlign: "center" }}>
@@ -305,53 +298,23 @@ function Step1() {
               <AnimatedNumber target={50} suffix="%" delay={900} />
             </div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.3 }}>
-              reduction with MCT<br/>prevention programs
+              preventable<br/>with MCT
             </div>
-            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>evidence: 39–56% range</div>
           </div>
         </div>
       </div>
 
-      {/* The gap */}
+      {/* Single concise bridge */}
       <div style={{
-        background: "#FEF2F2", borderRadius: 10, padding: "14px 16px", margin: "0 0 10px",
-        border: "1px solid #FECACA",
+        background: "#F8F9FB", borderRadius: 10, padding: "14px 16px",
+        border: "1px solid #E2E6EC",
       }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: CRIMSON, marginBottom: 6 }}>Why are amputations still happening?</div>
-        <div style={{ fontSize: 12, color: "#7F1D1D", lineHeight: 1.55 }}>
-          Most diabetic foot ulcers are treatable — but only when caught early and managed by a coordinated team.
-          Without a shared care platform, GPs discover wounds too late, vascular referrals take weeks, and podiatrists
-          never see the patient's glucose trends. The result: <span style={{ fontWeight: 700 }}>274 preventable amputations every day</span> across the EU.
+        <div style={{ fontSize: 13, color: "#3D4551", lineHeight: 1.6 }}>
+          Most diabetic foot ulcers are treatable — but without a coordinated team, referrals take weeks and wounds become amputations.
+          MCT prevention programs reduce this by <span style={{ fontWeight: 700, color: EMERALD }}>39–56%</span>.
         </div>
-      </div>
-
-      {/* The opportunity */}
-      <div style={{
-        background: "#ECFDF5", borderRadius: 10, padding: "14px 16px",
-        border: "1px solid #A7F3D0",
-      }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: EMERALD, marginBottom: 6 }}>What MCT coordination changes</div>
-        <div style={{ fontSize: 12, color: "#064E3B", lineHeight: 1.55 }}>
-          Research shows that multidisciplinary care team programs — combining a GP, diabetologist, vascular surgeon, podiatrist
-          and wound care nurse on a shared platform — reduce amputation rates by <span style={{ fontWeight: 700 }}>39–56%</span>.
-          That's up to <span style={{ fontWeight: 700 }}>50,000 limbs saved per year</span> in the EU.
-        </div>
-        <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            flex: 1, height: 6, background: "#D1FAE5", borderRadius: 3, overflow: "hidden",
-          }}>
-            <div style={{ width: "50%", height: "100%", background: EMERALD, borderRadius: 3 }} />
-          </div>
-          <span style={{ fontSize: 10, fontWeight: 700, color: EMERALD }}>50K limbs saved / year</span>
-        </div>
-      </div>
-
-      {/* CTA hint */}
-      <div style={{
-        marginTop: "auto", paddingTop: 12, textAlign: "center",
-      }}>
-        <div style={{ fontSize: 11, color: "#9BA3B0", fontWeight: 500 }}>
-          Here's how Connect makes this work — one patient's story →
+        <div style={{ fontSize: 13, color: "#3D4551", lineHeight: 1.6, marginTop: 8 }}>
+          Jean-Pierre is one of those patients. His GP just found an ulcer he couldn't feel.
         </div>
       </div>
     </div>
