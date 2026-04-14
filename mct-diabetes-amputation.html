@@ -57,14 +57,14 @@ const steps = [
   { label: "The Problem",   short: "1" },
   { label: "Alert",         short: "2" },
   { label: "MCT Response",  short: "3" },
-  { label: "Critical Save", short: "4" },
+  { label: "Monitoring", short: "4" },
   { label: "Outcome",       short: "5" },
 ];
 
 const cardSteps = [
   { status: "At Risk",    sc: RED,       sb: "#FEF2F2", wound: "—",           abi: "—",    hba1c: "9.1%", team: [],                                             cp: "none" },
   { status: "Urgent",     sc: RED,       sb: "#FEF2F2", wound: "Wagner 2",    abi: "—",    hba1c: "9.1%", team: ["gp"],                                          cp: "new" },
-  { status: "Active",     sc: ORANGE,    sb: "#FFF3E0", wound: "Wagner 2",    abi: "0.55", hba1c: "9.1%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
+  { status: "Urgent",     sc: RED,       sb: "#FEF2F2", wound: "Wagner 2",    abi: "0.55", hba1c: "9.1%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
   { status: "Active",     sc: GREEN,     sb: "#E8F8F0", wound: "Improving",   abi: "0.88", hba1c: "8.2%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
   { status: "Resolved",   sc: EMERALD,   sb: "#ECFDF5", wound: "Healed",      abi: "0.92", hba1c: "7.4%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "reviewed" },
 ];
@@ -353,15 +353,29 @@ function Step2() {
 
       <Message who="gp" time="9:20 AM" delay={400}
         text={<>
-          Urgent — during Jean-Pierre's routine diabetes review I removed his shoe and found a plantar ulcer on the left foot, approximately 2×3 cm. It's penetrating to tendon level with surrounding cellulitis and purulent discharge. He says it's been there "a few weeks" — he couldn't feel it due to his neuropathy.
-          <br/><br/>
-          His HbA1c is 9.1% (significantly above target), and he has no palpable pedal pulses on the left. This is a Wagner Grade 2 ulcer with likely underlying peripheral arterial disease. Without rapid coordinated intervention, this foot is at serious amputation risk.
+          Urgent — during Jean-Pierre's routine diabetes review I removed his shoe and found a Wagner Grade 2 ulcer on the left foot, approximately 2×3 cm. He says it's been there "a few weeks" — he couldn't feel it due to his neuropathy.
           <br/>
           <Tag text="⚠ Wagner Grade 2 ulcer" bg="#FEF2F2" color={RED} />
-          <Tag text="Absent pedal pulses" bg="#FEF2F2" color={RED} />
           <Tag text="MCT activation requested" bg="#E8F4FD" color={BLUE} />
         </>}
       />
+
+      {/* Attached photo */}
+      <div style={{
+        margin: "0 0 0 46px", padding: 0, animation: "fadeIn 0.5s ease",
+      }}>
+        <div style={{
+          borderRadius: 10, overflow: "hidden", border: "1px solid #E2E6EC",
+          width: 220, position: "relative",
+        }}>
+          <img
+            src="https://legsmatter.org/wp-content/uploads/2018/10/Legs_matter_heel_cracks_foot_ulcere-860x538.jpg"
+            alt="Clinical foot photograph — diabetic foot ulcer"
+            style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
+          />
+        </div>
+        <div style={{ fontSize: 10, color: "#9BA3B0", marginTop: 4 }}>Left foot, plantar surface — taken during consultation</div>
+      </div>
 
       <div style={{
         margin: "8px 0 0", padding: "10px 14px", background: "#EFF6FF", borderRadius: 10,
