@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect — Preventing Diabetes-Related Amputation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #F4F6F9;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes countUp { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const BLUE = "#0596DE";
+const DARK = "#073B5A";
+const GREEN = "#1B9E5A";
+const ORANGE = "#E67E22";
+const PURPLE = "#7C3AED";
+const TEAL = "#0D9488";
+const RED = "#DC2626";
+const CRIMSON = "#B91C1C";
+const EMERALD = "#059669";
+
+const photos = {
+  gp:       "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face&q=80",
+  diabeto:  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face&q=80",
+  vascular: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&h=150&fit=crop&crop=face&q=80",
+  podiatrist:"https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&h=150&fit=crop&crop=face&q=80",
+  nurse:    "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&h=150&fit=crop&crop=face&q=80",
+  patient:  "https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&crop=face&q=80",
+};
+
+const practitioners = {
+  gp:        { name: "Dr. Moreau",    role: "General Practitioner",  color: BLUE,   bg: "#E8F4FD" },
+  diabeto:   { name: "Dr. Chen",      role: "Diabetologist",         color: ORANGE, bg: "#FFF3E0" },
+  vascular:  { name: "Dr. Vasseur",   role: "Vascular Surgeon",      color: CRIMSON,bg: "#FEF2F2" },
+  podiatrist:{ name: "M. Fournier",   role: "Podiatrist",            color: PURPLE, bg: "#F3EEFF" },
+  nurse:     { name: "C. Leroy",      role: "Wound Care Nurse",      color: TEAL,   bg: "#ECFDF5" },
+};
+
+const steps = [
+  { label: "The Problem",   short: "1" },
+  { label: "Alert",         short: "2" },
+  { label: "MCT Response",  short: "3" },
+  { label: "Monitoring", short: "4" },
+  { label: "Outcome",       short: "5" },
+];
+
+const cardSteps = [
+  { status: "At Risk",    sc: RED,       sb: "#FEF2F2", wound: "—",           abi: "—",    hba1c: "9.1%", team: [],                                             cp: "none" },
+  { status: "Urgent",     sc: RED,       sb: "#FEF2F2", wound: "Wagner 2",    abi: "—",    hba1c: "9.1%", team: ["gp"],                                          cp: "new" },
+  { status: "Urgent",     sc: RED,       sb: "#FEF2F2", wound: "Wagner 2",    abi: "0.55", hba1c: "9.1%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
+  { status: "Active",     sc: GREEN,     sb: "#E8F8F0", wound: "Improving",   abi: "0.88", hba1c: "8.2%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "updated" },
+  { status: "Resolved",   sc: EMERALD,   sb: "#ECFDF5", wound: "Healed",      abi: "0.92", hba1c: "7.4%", team: ["gp","diabeto","vascular","podiatrist","nurse"], cp: "reviewed" },
+];
+
+// ─── Animated Counter ───
+
+function AnimatedNumber({ target, duration = 1500, suffix = "", prefix = "", delay = 0 }) {
+  const [value, setValue] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setStarted(true), delay);
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  useEffect(() => {
+    if (!started) return;
+    const start = performance.now();
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(target * eased));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, [started, target, duration]);
+
+  return <span>{prefix}{value.toLocaleString()}{suffix}</span>;
+}
+
+// ─── Shared Components ───
+
+function PhotoAvatar({ who, size = 36, borderColor }) {
+  const bc = borderColor || practitioners[who]?.color || BLUE;
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", overflow: "hidden",
+      flexShrink: 0, border: `2px solid ${bc}`,
+    }}>
+      <img src={photos[who]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+    </div>
+  );
+}
+
+function SmallPhoto({ who, active }) {
+  if (!active) return null;
+  const p = practitioners[who];
+  return (
+    <div style={{
+      width: 28, height: 28, borderRadius: "50%", overflow: "hidden",
+      border: `2px solid ${p.color}`, marginRight: -6, flexShrink: 0,
+    }}>
+      <img src={photos[who]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+    </div>
+  );
+}
+
+function RoleBadge({ who }) {
+  const p = practitioners[who];
+  return (
+    <span style={{
+      display: "inline-block", padding: "2px 8px", borderRadius: 4,
+      fontSize: 9, fontWeight: 600, background: p.bg, color: p.color,
+      textTransform: "uppercase", letterSpacing: 0.4,
+    }}>{p.role}</span>
+  );
+}
+
+function Message({ who, text, time, delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  const p = practitioners[who];
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+
+  return (
+    <div style={{
+      display: "flex", gap: 10, padding: "10px 0",
+      opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)",
+      transition: "all 0.4s ease",
+    }}>
+      <PhotoAvatar who={who} size={36} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#2D3340" }}>{p.name}</span>
+          <RoleBadge who={who} />
+          <span style={{ fontSize: 10, color: "#9BA3B0", marginLeft: "auto" }}>{time}</span>
+        </div>
+        <div style={{ fontSize: 13, color: "#3D4551", lineHeight: 1.55, marginTop: 4 }}>{text}</div>
+      </div>
+    </div>
+  );
+}
+
+function Divider({ text, delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "10px 0",
+      opacity: visible ? 1 : 0, transition: "opacity 0.3s ease",
+    }}>
+      <div style={{ flex: 1, height: 1, background: "#E2E6EC" }} />
+      <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6, color: "#9BA3B0", whiteSpace: "nowrap" }}>{text}</span>
+      <div style={{ flex: 1, height: 1, background: "#E2E6EC" }} />
+    </div>
+  );
+}
+
+function Tag({ text, bg, color }) {
+  return (
+    <span style={{
+      display: "inline-block", marginTop: 4, marginRight: 4,
+      background: bg, color, padding: "2px 8px",
+      borderRadius: 4, fontWeight: 600, fontSize: 11,
+    }}>{text}</span>
+  );
+}
+
+function CheckItem({ text, checked = false, delay = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t); }, [delay]);
+  return (
+    <div style={{
+      display: "flex", alignItems: "flex-start", gap: 8, padding: "5px 0",
+      opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(6px)",
+      transition: "all 0.3s ease",
+    }}>
+      <div style={{
+        width: 16, height: 16, borderRadius: 4, flexShrink: 0, marginTop: 1,
+        border: checked ? "none" : `1.5px solid ${EMERALD}`,
+        background: checked ? EMERALD : "white",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        {checked && <span style={{ color: "white", fontSize: 10, fontWeight: 700 }}>✓</span>}
+      </div>
+      <span style={{ fontSize: 12, color: "#3D4551", lineHeight: 1.4 }}>{text}</span>
+    </div>
+  );
+}
+
+// ─── Patient Card ───
+
+function PatientCard({ step }) {
+  const c = cardSteps[step];
+  return (
+    <div style={{ padding: "14px 20px", background: "#F8F9FB", borderBottom: "1px solid #E2E6EC" }}>
+      <div style={{ background: "white", border: "1px solid #E2E6EC", borderRadius: 12, padding: "14px 16px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <PhotoAvatar who="patient" size={40} borderColor={BLUE} />
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#2D3340" }}>Jean-Pierre Renaud</div>
+            <div style={{ fontSize: 11, color: "#737D8C", marginTop: 1 }}>64 yrs · T2DM (12 years) · Peripheral Neuropathy</div>
+          </div>
+          <span style={{
+            marginLeft: "auto", display: "inline-block", padding: "2px 10px", borderRadius: 20,
+            fontSize: 10, fontWeight: 600, background: c.sb, color: c.sc,
+          }}>{c.status}</span>
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          {[
+            { label: "Wound", value: c.wound, warn: c.wound === "Wagner 2" },
+            { label: "ABI", value: c.abi, warn: c.abi === "0.55" },
+            { label: "HbA1c", value: c.hba1c, warn: parseFloat(c.hba1c) > 8.5 },
+          ].map(m => (
+            <div key={m.label} style={{ flex: 1, background: m.warn ? "#FEF2F2" : "#F8F9FB", borderRadius: 8, padding: "7px 8px", textAlign: "center", transition: "background 0.4s" }}>
+              <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "#9BA3B0", marginBottom: 2 }}>{m.label}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: m.warn ? RED : m.value === "Healed" || m.value === "Improving" ? EMERALD : "#2D3340", transition: "color 0.4s" }}>{m.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 2, marginTop: 10, paddingTop: 10, borderTop: "1px solid #F1F3F6" }}>
+          {["gp","diabeto","vascular","podiatrist","nurse"].map(who => (
+            <SmallPhoto key={who} who={who} active={c.team.includes(who)} />
+          ))}
+          {c.team.length > 0 && (
+            <span style={{ fontSize: 10, color: "#9BA3B0", marginLeft: 14 }}>
+              {c.team.length} {c.team.length === 1 ? "member" : "members"}
+            </span>
+          )}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontSize: 10, color: "#9BA3B0" }}>📋 Care Plan</span>
+            <span style={{
+              display: "inline-block", width: 8, height: 8, borderRadius: "50%",
+              background: c.cp === "new" ? RED : c.cp === "updated" ? ORANGE : c.cp === "reviewed" ? EMERALD : "#D1D5DB",
+            }} />
+            <span style={{
+              fontSize: 9, fontWeight: 600,
+              color: c.cp === "new" ? RED : c.cp === "updated" ? ORANGE : c.cp === "reviewed" ? EMERALD : "#9BA3B0",
+            }}>{c.cp === "new" ? "Urgent" : c.cp === "updated" ? "Updated" : c.cp === "reviewed" ? "Complete" : "—"}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Step 1: The Problem ───
+
+function Step1() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Hero stats */}
+      <div style={{
+        background: "linear-gradient(135deg, #073B5A 0%, #0B4D73 100%)",
+        borderRadius: 12, padding: "20px 22px", margin: "6px 0 0",
+        color: "white",
+      }}>
+        <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
+              <AnimatedNumber target={60} suffix="M" delay={300} />
+            </div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.3 }}>
+              people in the EU<br/>with diabetes
+            </div>
+          </div>
+          <div style={{ width: 1, background: "rgba(255,255,255,0.15)" }} />
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1, color: "#F87171" }}>
+              <AnimatedNumber target={100} suffix="K" delay={600} />
+            </div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.3 }}>
+              amputations<br/>per year
+            </div>
+          </div>
+          <div style={{ width: 1, background: "rgba(255,255,255,0.15)" }} />
+          <div style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1, color: "#34D399" }}>
+              <AnimatedNumber target={50} suffix="%" delay={900} />
+            </div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.3 }}>
+              preventable<br/>with MCT
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bridge text */}
+      <div style={{
+        background: "#F8F9FB", borderRadius: 10, padding: "14px 16px",
+        border: "1px solid #E2E6EC",
+      }}>
+        <div style={{ fontSize: 13, color: "#3D4551", lineHeight: 1.6 }}>
+          Most diabetic foot ulcers are treatable — but without a coordinated team, referrals take weeks and wounds become amputations. Multidisciplinary Care Team (MCT) collaboration programs <span style={{ fontWeight: 700 }}>reduce diabetic amputations by 39–56%</span>. <a href="https://www.diabetesresearchclinicalpractice.com/article/S0168-8227(19)31196-9/fulltext" target="_blank" rel="noopener" style={{ fontSize: 9, color: BLUE, cursor: "pointer", borderBottom: "1px dotted " + BLUE, textDecoration: "none" }}>source</a>
+        </div>
+      </div>
+
+      {/* Patient hook */}
+      <div style={{
+        background: "#FEF2F2", borderRadius: 10, padding: "12px 16px",
+        border: "1px solid #FECACA",
+      }}>
+        <div style={{ fontSize: 13, color: "#7F1D1D", lineHeight: 1.6 }}>
+          Jean-Pierre is exactly this kind of patient. His GP just found an ulcer he couldn't feel.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Step 2: The Alert ───
+
+function Step2() {
+  return (
+    <>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
+        background: "#FEF2F2", borderRadius: 10, margin: "6px 0",
+        animation: "fadeIn 0.4s ease",
+      }}>
+        <PhotoAvatar who="gp" size={28} />
+        <PhotoAvatar who="patient" size={28} style={{ marginLeft: -14 }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: DARK }}>Routine check-up · 30 min</div>
+          <div style={{ fontSize: 11, color: "#6B7280" }}>Dr. Moreau with Jean-Pierre Renaud</div>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 4,
+          padding: "4px 8px", borderRadius: 6, background: "#FEF2F2", border: "1px solid #FECACA",
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: RED }}>⚠ Alert raised</span>
+        </div>
+      </div>
+
+      <Message who="gp" time="9:20 AM" delay={400}
+        text={<>
+          Urgent — during Jean-Pierre's routine diabetes review I removed his shoe and found a Wagner Grade 2 ulcer on the left foot, approximately 2×3 cm. He says it's been there "a few weeks" — he couldn't feel it due to his neuropathy.
+          <br/>
+          <Tag text="⚠ Wagner Grade 2 ulcer" bg="#FEF2F2" color={RED} />
+          <Tag text="MCT activation requested" bg="#E8F4FD" color={BLUE} />
+        </>}
+      />
+
+      {/* Attached photo */}
+      <div style={{
+        margin: "0 0 0 46px", padding: 0, animation: "fadeIn 0.5s ease",
+      }}>
+        <div style={{
+          borderRadius: 10, overflow: "hidden", border: "1px solid #E2E6EC",
+          width: 220, position: "relative",
+        }}>
+          <img
+            src="https://legsmatter.org/wp-content/uploads/2018/10/Legs_matter_heel_cracks_foot_ulcere-860x538.jpg"
+            alt="Clinical foot photograph — diabetic foot ulcer"
+            style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }}
+          />
+        </div>
+        <div style={{ fontSize: 10, color: "#9BA3B0", marginTop: 4 }}>Left foot, plantar surface — taken during consultation</div>
+      </div>
+
+      <div style={{
+        margin: "8px 0 0", padding: "10px 14px", background: "#EFF6FF", borderRadius: 10,
+        border: "1px solid #BFDBFE", animation: "fadeIn 0.6s ease",
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: BLUE, marginBottom: 4 }}>
+          Without Connect
+        </div>
+        <div style={{ fontSize: 12, color: "#1E40AF", lineHeight: 1.5 }}>
+          This referral would take 2–4 weeks via traditional channels. Fax to vascular, separate letter to podiatry, phone tag with the diabetologist. By then, infection spreads, tissue dies, and surgical options narrow to one: amputation.
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Step 3: MCT Response ───
+
+function Step3() {
+  return (
+    <>
+      <Divider text="Same day — MCT activated via Connect" delay={100} />
+
+      <Message who="vascular" time="10:45 AM" delay={300}
+        text={<>
+          Seen the photos and notes. Absent pedal pulses and a Wagner 2 ulcer — I'm fast-tracking a duplex ultrasound and CT angiography for today. If we confirm significant PAD, we'll need endovascular revascularisation (angioplasty) before this wound can heal. The tissue needs perfusion to recover.
+          <br/><Tag text="CT angio ordered — today" bg="#FEF2F2" color={CRIMSON} />
+        </>}
+      />
+
+      <Message who="diabeto" time="11:10 AM" delay={600}
+        text={<>
+          HbA1c at 9.1% is far too high — poor glycaemic control severely impairs wound healing. I'm switching Jean-Pierre from oral metformin monotherapy to basal-bolus insulin (glargine + lispro) with immediate effect. Target fasting glucose under 7 mmol/L. Also starting IV antibiotics — the cellulitis around the ulcer needs aggressive coverage. Tazocin empirically, then narrow based on wound swab cultures.
+          <br/><Tag text="Basal-bolus insulin started" bg="#FFF3E0" color={ORANGE} /> <Tag text="IV Tazocin" bg="#FFF3E0" color={ORANGE} />
+        </>}
+      />
+
+      <Message who="podiatrist" time="11:40 AM" delay={900}
+        text={<>
+          I'll do the initial sharp debridement this afternoon — removing necrotic tissue so we can assess the true wound bed. Fitting a total contact cast for offloading after debridement. This is critical: every step Jean-Pierre takes on that ulcer without offloading drives it deeper. <span style={{ color: TEAL, fontWeight: 600, cursor: "pointer" }}>@C. Leroy</span> — can you set up daily wound reviews from tomorrow?
+        </>}
+      />
+
+      <Message who="nurse" time="12:15 PM" delay={1200}
+        text={<>
+          Daily wound care plan is set up. I'll do saline irrigation + foam dressing changes, photograph and measure the wound at each visit, and track healing trajectory on Connect so the whole team can see progress in real time. Also starting Jean-Pierre on twice-daily capillary glucose monitoring — he's agreed to log consistently.
+          <br/><Tag text="Daily wound reviews scheduled" bg="#ECFDF5" color={TEAL} />
+        </>}
+      />
+    </>
+  );
+}
+
+// ─── Step 4: The Critical Save ───
+
+function Step4() {
+  return (
+    <>
+      <Divider text="Day 3 — Vascular intervention" delay={100} />
+
+      <Message who="vascular" time="Thu 2:30 PM" delay={300}
+        text={<>
+          CT angiography confirmed a severe stenosis of the left posterior tibial artery and occlusion of the dorsalis pedis. ABI was 0.55 — critical limb ischaemia territory. We performed percutaneous transluminal angioplasty this morning. Good result: restored inline flow to the foot, ABI now 0.88. The wound bed should pink up within 48 hours.
+          <br/><Tag text="Angioplasty successful" bg="#E8F8F0" color={GREEN} /> <Tag text="ABI 0.55 → 0.88" bg="#E8F8F0" color={GREEN} />
+        </>}
+      />
+
+      <Divider text="Week 3 — Wound responding" delay={500} />
+
+      <Message who="nurse" time="Mon 9:00 AM" delay={700}
+        text={<>
+          Major progress. Wound has granulated by approximately 60% since revascularisation. Cellulitis resolved after 10 days of IV antibiotics — stepped down to oral co-amoxiclav. Wound measurements: 2×3 cm → 1.2×1.8 cm. Jean-Pierre's glucose diary shows fasting readings averaging 6.8 mmol/L on the new insulin regime.
+          <br/><Tag text="Wound 60% granulated" bg="#E8F8F0" color={GREEN} /> <Tag text="Fasting glucose 6.8" bg="#E8F8F0" color={GREEN} />
+        </>}
+      />
+
+      <Message who="podiatrist" time="Mon 10:30 AM" delay={1000}
+        text="Offloading cast is working perfectly — no new pressure areas. I'll transition to a therapeutic shoe with custom insole once the wound closes. Long-term, Jean-Pierre needs annual foot screening and permanent neuropathy-grade footwear to prevent recurrence."
+      />
+
+      <Message who="diabeto" time="Mon 11:15 AM" delay={1300}
+        text={<>
+          Excellent response to insulin therapy. HbA1c won't reflect this for another 8 weeks, but the glucose diary tells the story. I'll keep him on basal-bolus for now and reassess at 3 months — possible step-down to basal insulin + SGLT2 inhibitor for cardio-renal protection once he's stable.
+          <br/><Tag text="HbA1c recheck at 3 months" bg="#FFF3E0" color={ORANGE} />
+        </>}
+      />
+    </>
+  );
+}
+
+// ─── Step 5: Outcome ───
+
+function Step5() {
+  return (
+    <>
+      <Divider text="Week 10 — Wound healed" delay={100} />
+
+      {/* Success banner */}
+      <div style={{
+        background: "linear-gradient(135deg, #059669 0%, #10B981 100%)",
+        borderRadius: 10, padding: "16px 18px", margin: "6px 0 10px",
+        color: "white", animation: "fadeIn 0.6s ease",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+          <div style={{ fontSize: 24 }}>✓</div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700 }}>Limb saved. Wound fully healed.</div>
+            <div style={{ fontSize: 11, opacity: 0.8 }}>70 days from alert to resolution — coordinated via Connect</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {[
+            { label: "Wound", from: "Wagner 2", to: "Healed" },
+            { label: "ABI", from: "0.55", to: "0.92" },
+            { label: "HbA1c", from: "9.1%", to: "7.4%" },
+          ].map(m => (
+            <div key={m.label} style={{ flex: 1, background: "rgba(255,255,255,0.15)", borderRadius: 8, padding: "8px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, opacity: 0.7 }}>{m.label}</div>
+              <div style={{ fontSize: 10, opacity: 0.6, textDecoration: "line-through", marginTop: 2 }}>{m.from}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginTop: 1 }}>{m.to}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Message who="gp" time="Today" delay={500}
+        text="Ten weeks ago, this foot was heading for amputation. Here's our ongoing prevention plan:"
+      />
+
+      <div style={{
+        marginTop: 4, padding: "12px 14px", background: "#F8F9FB",
+        borderRadius: 10, border: "1px solid #E2E6EC",
+      }}>
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: DARK }}>Long-term prevention plan</span>
+        </div>
+        <CheckItem text="Annual foot screening with monofilament + ABI — booked via Connect" delay={700} />
+        <CheckItem text="Permanent therapeutic footwear with custom orthotic insoles" delay={900} />
+        <CheckItem text="HbA1c target < 7.5% — 3-monthly diabetologist reviews" delay={1100} />
+        <CheckItem text="Smoking cessation support (PAD risk factor)" delay={1300} />
+        <CheckItem text="Patient education: daily foot self-inspection, what to report" delay={1500} />
+        <CheckItem text="Next MCT review in 3 months, or immediately if new wound" delay={1700} />
+      </div>
+
+      {/* Scale impact */}
+      <div style={{
+        background: DARK, borderRadius: 10, padding: "14px 16px", marginTop: 10,
+        color: "white", animation: "fadeIn 0.6s ease",
+      }}>
+        <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.8, color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
+          One patient. Now imagine the scale.
+        </div>
+        <div style={{ fontSize: 12, lineHeight: 1.6, color: "rgba(255,255,255,0.85)" }}>
+          If every diabetic foot patient in the EU had an MCT coordinating
+          through a shared platform like Connect, the evidence shows we could prevent
+          <span style={{ fontWeight: 700, color: "#34D399" }}> up to 50,000 amputations every year</span>.
+        </div>
+      </div>
+    </>
+  );
+}
+
+const stepComponents = [Step1, Step2, Step3, Step4, Step5];
+
+// ─── Main App ───
+
+function App() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+
+  function goTo(i) {
+    setCurrentStep(i);
+    setAnimKey(k => k + 1);
+  }
+
+  const StepContent = stepComponents[currentStep];
+
+  return (
+    <div style={{
+      width: 520, height: 840, background: "white", borderRadius: 16,
+      boxShadow: "0 16px 48px rgba(7,59,90,0.12), 0 0 0 1px rgba(0,0,0,0.04)",
+      display: "flex", flexDirection: "column", overflow: "hidden",
+    }}>
+      {/* Title bar */}
+      <div style={{
+        height: 48, background: DARK, display: "flex", alignItems: "center",
+        padding: "0 20px", gap: 10, flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 17, fontWeight: 700, color: "white", letterSpacing: -0.3 }}>Connect</span>
+        <span style={{
+          fontSize: 10, fontWeight: 600, color: "rgba(255,255,255,0.4)",
+          textTransform: "uppercase", letterSpacing: 0.6,
+        }}>MCT · Amputation Prevention</span>
+        <div style={{ flex: 1 }} />
+        {currentStep > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: GREEN }} />
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>
+              {cardSteps[currentStep].team.length} online
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Patient card (hidden on step 1) */}
+      <PatientCard step={currentStep} />
+
+      {/* Content area */}
+      <div key={animKey} style={{
+        flex: 1, overflowY: "auto", padding: "8px 20px",
+        display: "flex", flexDirection: "column",
+      }}>
+        <StepContent />
+      </div>
+
+      {/* Step navigation */}
+      <div style={{ borderTop: "1px solid #E2E6EC", padding: "12px 16px 14px", background: "white", flexShrink: 0 }}>
+        <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
+          {steps.map((_, i) => (
+            <div key={i} style={{
+              flex: 1, height: 3, borderRadius: 2,
+              background: i <= currentStep ? (i === 0 ? CRIMSON : i < 4 ? BLUE : EMERALD) : "#E2E6EC",
+              transition: "background 0.3s",
+            }} />
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          {steps.map((s, i) => {
+            const isActive = i === currentStep;
+            const accent = i === 0 ? CRIMSON : i < 4 ? BLUE : EMERALD;
+            return (
+              <button key={i} onClick={() => goTo(i)} style={{
+                flex: 1, padding: "8px 4px", borderRadius: 8,
+                border: isActive ? `2px solid ${accent}` : "2px solid transparent",
+                background: isActive ? (i === 0 ? "#FEF2F2" : i < 4 ? "#E8F4FD" : "#ECFDF5") : "#F8F9FB",
+                cursor: "pointer", transition: "all 0.2s", fontFamily: "inherit",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: isActive ? accent : "#9BA3B0" }}>{s.short}</span>
+                <span style={{ fontSize: 9, fontWeight: 500, color: isActive ? accent : "#9BA3B0" }}>{s.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
+          <button onClick={() => currentStep > 0 && goTo(currentStep - 1)} style={{
+            padding: "6px 16px", borderRadius: 6, border: "1px solid #E2E6EC",
+            background: "white", fontSize: 12, fontWeight: 500, color: "#3D4551",
+            cursor: currentStep > 0 ? "pointer" : "default",
+            opacity: currentStep > 0 ? 1 : 0.3, fontFamily: "inherit",
+          }}>← Previous</button>
+          <button onClick={() => currentStep < 4 && goTo(currentStep + 1)} style={{
+            padding: "6px 16px", borderRadius: 6, border: "none",
+            background: currentStep < 4 ? BLUE : EMERALD,
+            fontSize: 12, fontWeight: 600, color: "white",
+            cursor: currentStep < 4 ? "pointer" : "default", fontFamily: "inherit",
+          }}>{currentStep === 0 ? "See the story →" : currentStep < 4 ? "Next →" : "Done ✓"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
