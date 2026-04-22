@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Doctolib Connect — First Run Activation Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #0063F7;
+    --primary-dark: #0052CC;
+    --primary-soft: #E8F1FF;
+    --navy: #062049;
+    --text: #1A2B4A;
+    --text-secondary: #5A6F8D;
+    --text-muted: #8A9AB2;
+    --success: #00C896;
+    --success-dark: #009E77;
+    --success-soft: #E0F7EF;
+    --border: #E5E9F0;
+    --border-strong: #CBD3DF;
+    --bg-subtle: #F4F7FB;
+    --bg-card: #FFFFFF;
+    --warning: #F7A100;
+    --warning-soft: #FFF6E5;
+    --shadow-sm: 0 1px 2px rgba(6, 32, 73, 0.06);
+    --shadow-md: 0 4px 16px rgba(6, 32, 73, 0.08);
+    --shadow-lg: 0 10px 30px rgba(6, 32, 73, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { min-height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #DDE9F8 0%, #EDF2F9 50%, #E0EAF7 100%);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Keep chrome elements at natural size (no flex shrinking) */
+  .proto-title, .proto-sub, .proto-reset { flex-shrink: 0; }
+
+  /* Prototype chrome */
+  .proto-title {
+    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .proto-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+  .proto-reset {
+    margin-top: 20px;
+    background: rgba(6, 32, 73, 0.08);
+    color: var(--navy);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .proto-reset:hover { background: rgba(6, 32, 73, 0.14); }
+
+  /* Phone frame — iPhone 14 proportions (390 × 844pt) */
+  .phone {
+    width: 390px; height: 844px;
+    flex-shrink: 0; /* critical: prevent flex parent from compressing the phone */
+    background: #fff;
+    border-radius: 54px;
+    border: 10px solid #12141C;
+    box-shadow: 0 30px 80px rgba(6, 32, 73, 0.28), 0 2px 6px rgba(0,0,0,0.06);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    position: absolute; top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 130px; height: 28px;
+    background: #12141C;
+    border-radius: 0 0 18px 18px;
+    z-index: 10;
+  }
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 28px 4px;
+    font-size: 14px; font-weight: 600;
+    color: var(--navy);
+    flex-shrink: 0;
+  }
+  .status-bar .icons { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+
+  /* Screens */
+  .screens { flex: 1; position: relative; overflow: hidden; }
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--bg-card);
+  }
+  .screen.active { display: flex; }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* App header */
+  .app-header {
+    display: flex; align-items: center;
+    padding: 14px 20px 10px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    background: none; border: none;
+    font-size: 22px; color: var(--navy);
+    cursor: pointer; padding: 4px 8px;
+    position: absolute; left: 12px; top: 10px;
+    font-family: inherit;
+  }
+  .logo-dr {
+    font-family: 'Pacifico', cursive;
+    font-size: 26px;
+    color: var(--navy);
+    width: 100%; text-align: center;
+    line-height: 1;
+    padding: 6px 0;
+  }
+
+  /* Stepper (reused from Figma) */
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 4px 20px 18px; flex-shrink: 0; }
+  .step {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #DDE3EC; color: #8A9AB2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+  }
+  .step.done { background: var(--success); color: #fff; }
+  .step.active { background: var(--primary); color: #fff; }
+  .step-chevron { color: #CBD3DF; font-size: 12px; }
+
+  /* Content blocks */
+  .content { padding: 8px 22px 20px; flex: 1; }
+  h1.screen-title {
+    font-size: 22px; font-weight: 700; color: var(--navy);
+    margin-bottom: 8px; line-height: 1.25;
+  }
+  h2.section-title {
+    font-size: 15px; font-weight: 600; color: var(--navy);
+    margin-bottom: 10px;
+  }
+  p.lede { font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 22px; }
+  p.small { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+  /* Buttons */
+  .btn {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-size: 15px; font-weight: 600;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.08s ease, background 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.primary { background: var(--primary); color: #fff; }
+  .btn.primary:hover { background: var(--primary-dark); }
+  .btn.secondary {
+    background: #fff; color: var(--primary);
+    border: 1.5px solid var(--primary);
+  }
+  .btn.secondary:hover { background: var(--primary-soft); }
+  .btn.ghost { background: transparent; color: var(--text-secondary); font-weight: 500; }
+  .btn.ghost:hover { color: var(--navy); }
+  .btn.disabled { background: #CBD3DF; color: #fff; cursor: not-allowed; }
+  .btn.disabled:active { transform: none; }
+  .btn-stack { display: flex; flex-direction: column; gap: 10px; padding: 0 22px 28px; flex-shrink: 0; }
+
+  /* Activation Hub */
+  .hub-greeting {
+    padding: 4px 22px 18px;
+  }
+  .hub-eyebrow {
+    font-size: 13px; color: var(--primary); font-weight: 600;
+    margin-bottom: 6px; letter-spacing: 0.02em;
+  }
+  .hub-title {
+    font-size: 24px; font-weight: 700; color: var(--navy); line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .hub-sub {
+    font-size: 14px; color: var(--text-secondary); line-height: 1.5;
+  }
+
+  .progress-card {
+    margin: 8px 22px 18px;
+    background: linear-gradient(135deg, #0063F7 0%, #0052CC 100%);
+    color: #fff;
+    border-radius: 16px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow-md);
+  }
+  .progress-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-label { font-size: 13px; font-weight: 500; opacity: 0.9; }
+  .progress-count { font-size: 22px; font-weight: 700; }
+  .progress-count span.slash { opacity: 0.6; font-weight: 500; }
+  .progress-bar {
+    height: 6px; background: rgba(255,255,255,0.22); border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%; background: #fff; width: 0%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .checklist { padding: 0 22px; display: flex; flex-direction: column; gap: 12px; }
+  .lever {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 14px;
+    display: flex; gap: 12px; align-items: flex-start;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  }
+  .lever:hover { border-color: var(--primary); box-shadow: var(--shadow-sm); }
+  .lever.done { background: var(--success-soft); border-color: var(--success); }
+  .lever.done:hover { border-color: var(--success-dark); }
+  .lever-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--primary-soft);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--primary);
+  }
+  .lever.done .lever-icon { background: var(--success); color: #fff; }
+  .lever-body { flex: 1; min-width: 0; }
+  .lever-row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 8px; }
+  .lever-title { font-size: 15px; font-weight: 600; color: var(--navy); }
+  .lever-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+  .lever.done .lever-desc { color: var(--success-dark); }
+  .pill {
+    font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+    letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .pill.todo { background: #F0F3F9; color: var(--text-secondary); }
+  .pill.done { background: var(--success); color: #fff; }
+  .chev-arrow { color: var(--text-muted); font-size: 18px; flex-shrink: 0; align-self: center; }
+  .lever.done .chev-arrow { color: var(--success); }
+
+  .hub-footer { padding: 16px 22px 24px; margin-top: auto; }
+  .hub-footer .btn.ghost { font-size: 13px; }
+
+  /* Verification flow */
+  .icon-hero {
+    width: 72px; height: 72px; border-radius: 20px;
+    background: var(--primary-soft); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    margin: 12px 0 20px;
+  }
+  .icon-hero.success { background: var(--success-soft); color: var(--success); }
+
+  .info-list { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  .info-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 14px; border-radius: 12px;
+    background: var(--bg-subtle);
+  }
+  .info-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #fff; color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-weight: 700; font-size: 13px;
+    border: 1.5px solid var(--primary-soft);
+  }
+  .info-text { font-size: 13px; color: var(--text); line-height: 1.45; }
+  .info-text strong { display: block; color: var(--navy); margin-bottom: 2px; font-weight: 600; }
+
+  /* Upload box */
+  .upload-box {
+    border: 2px dashed var(--border-strong);
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    background: var(--bg-subtle);
+    margin: 10px 0 16px;
+    transition: all 0.15s ease;
+  }
+  .upload-box.filled {
+    border-style: solid;
+    border-color: var(--success);
+    background: var(--success-soft);
+  }
+  .upload-box .up-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #fff; color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .upload-box.filled .up-icon { background: var(--success); color: #fff; }
+  .upload-box .up-title { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .upload-box .up-sub { font-size: 12px; color: var(--text-secondary); }
+
+  /* Form fields */
+  .field { margin-bottom: 16px; }
+  .field-label {
+    display: block;
+    font-size: 13px; font-weight: 600; color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .field-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 10px;
+    font-size: 15px; color: var(--text);
+    font-family: inherit;
+    background: #fff;
+    transition: border-color 0.15s ease;
+  }
+  .field-input:focus { outline: none; border-color: var(--primary); }
+
+  /* iOS permission modal */
+  .ios-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex; align-items: center; justify-content: center;
+    padding: 40px 24px;
+    z-index: 5;
+  }
+  .ios-modal {
+    background: rgba(245, 245, 247, 0.98);
+    border-radius: 14px;
+    width: 100%;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    backdrop-filter: blur(20px);
+  }
+  .ios-modal-body {
+    padding: 20px 18px 16px;
+    text-align: center;
+  }
+  .ios-modal-title { font-size: 16px; font-weight: 600; color: #000; margin-bottom: 6px; }
+  .ios-modal-msg { font-size: 13px; color: #3A3A3C; line-height: 1.4; }
+  .ios-modal-actions {
+    display: flex; border-top: 0.5px solid rgba(60, 60, 67, 0.29);
+  }
+  .ios-modal-btn {
+    flex: 1; background: none; border: none;
+    padding: 12px;
+    font-size: 16px; font-family: inherit;
+    color: #007AFF; cursor: pointer;
+  }
+  .ios-modal-btn.strong { font-weight: 600; }
+  .ios-modal-btn + .ios-modal-btn { border-left: 0.5px solid rgba(60, 60, 67, 0.29); }
+
+  /* Syncing animation */
+  .syncing-stage {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; padding: 40px 30px; text-align: center;
+  }
+  .sync-ring {
+    width: 80px; height: 80px;
+    border: 4px solid var(--primary-soft);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Contact list */
+  .contact-list { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+  .contact-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 4px;
+  }
+  .contact-row.selectable { cursor: pointer; border-radius: 10px; padding: 10px 10px; }
+  .contact-row.selectable:hover { background: var(--bg-subtle); }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 600; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .avatar.sz-lg { width: 48px; height: 48px; font-size: 16px; }
+  .avatar.sz-sm { width: 32px; height: 32px; font-size: 12px; }
+  .contact-info { flex: 1; min-width: 0; }
+  .contact-name { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .contact-role { font-size: 12px; color: var(--text-secondary); }
+  .checkbox {
+    width: 22px; height: 22px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .contact-row.selected .checkbox {
+    background: var(--primary); border-color: var(--primary); color: #fff;
+  }
+
+  /* Contact chips (in group name screen) */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px 5px 5px;
+    background: var(--primary-soft); color: var(--primary);
+    border-radius: 999px;
+    font-size: 12px; font-weight: 500;
+  }
+  .chip .chip-avatar {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 600;
+  }
+
+  /* Preference rows */
+  .pref-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .pref-row:last-child { border-bottom: none; }
+  .pref-info { flex: 1; min-width: 0; }
+  .pref-title { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 2px; }
+  .pref-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
+  .toggle {
+    width: 44px; height: 26px;
+    background: #CBD3DF;
+    border-radius: 999px;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+  }
+  .toggle-dot {
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    position: absolute; top: 2px; left: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: left 0.2s ease;
+  }
+  .toggle.on { background: var(--primary); }
+  .toggle.on .toggle-dot { left: 20px; }
+
+  /* Completion screen */
+  .completion-hero {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 30px 24px 12px; text-align: center;
+  }
+  .completion-badge {
+    width: 96px; height: 96px;
+    background: radial-gradient(circle at 30% 30%, #00E6A8, #00C896 70%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0, 200, 150, 0.35);
+  }
+  .completion-title { font-size: 26px; font-weight: 700; color: var(--navy); margin-bottom: 10px; line-height: 1.2; }
+  .completion-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.5; }
+  .completion-summary {
+    background: var(--bg-subtle);
+    margin: 24px 22px 0;
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .completion-summary h3 { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 10px; letter-spacing: 0.02em; text-transform: uppercase; }
+  .summary-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; font-size: 13px; color: var(--text); line-height: 1.45; }
+  .summary-item .check { color: var(--success); flex-shrink: 0; margin-top: 2px; }
+
+  /* Chat list */
+  .chat-header {
+    padding: 14px 20px 10px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-header h2 { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .chat-header .ic-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg-subtle);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--navy);
+  }
+  .search-bar {
+    margin: 12px 20px; padding: 10px 14px;
+    background: var(--bg-subtle); border-radius: 10px;
+    display: flex; align-items: center; gap: 10px;
+    color: var(--text-muted);
+  }
+  .search-bar span { font-size: 14px; }
+
+  .chat-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .chat-row:hover { background: var(--bg-subtle); }
+  .chat-row.group .avatar {
+    background: var(--primary);
+  }
+  .chat-content { flex: 1; min-width: 0; }
+  .chat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+  .chat-name { font-size: 15px; font-weight: 600; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-time { font-size: 11px; color: var(--text-muted); flex-shrink: 0; margin-left: 6px; }
+  .chat-preview { font-size: 13px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-new-badge {
+    font-size: 10px; font-weight: 700;
+    background: var(--success); color: #fff;
+    padding: 2px 7px; border-radius: 999px;
+    margin-left: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Finish-setup re-entry card */
+  .setup-card {
+    margin: 12px 20px 0;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #0063F7 0%, #0052CC 100%);
+    color: #fff;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 99, 247, 0.25);
+    transition: transform 0.1s ease;
+  }
+  .setup-card:active { transform: scale(0.99); }
+  .setup-card-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .setup-card-title { font-size: 14px; font-weight: 600; }
+  .setup-card-count {
+    font-size: 11px; font-weight: 600;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 9px; border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .setup-card-bar {
+    height: 5px; background: rgba(255,255,255,0.22); border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .setup-card-fill {
+    height: 100%; background: #fff; width: 0%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .setup-card-bottom {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; font-weight: 500;
+  }
+  .setup-card-cta { opacity: 0.95; }
+  .setup-card-arrow { font-size: 18px; opacity: 0.9; }
+
+  .chat-banner {
+    margin: 12px 20px 0;
+    padding: 12px 14px;
+    background: var(--primary-soft);
+    border-radius: 12px;
+    border-left: 3px solid var(--primary);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .chat-banner .icon { color: var(--primary); flex-shrink: 0; margin-top: 1px; }
+  .chat-banner p { font-size: 13px; color: var(--navy); line-height: 1.4; }
+  .chat-banner strong { font-weight: 600; }
+
+  /* Toast */
+  .toast {
+    position: absolute; bottom: 24px; left: 20px; right: 20px;
+    background: var(--navy); color: #fff;
+    padding: 12px 16px; border-radius: 12px;
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0; transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast .check {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--success); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Helpers */
+  .spacer-sm { height: 10px; }
+  .spacer-md { height: 20px; }
+  .mt-auto { margin-top: auto; }
+
+  @media (max-width: 440px) {
+    body { padding: 16px 8px 60px; }
+    .phone { width: 100%; max-width: 390px; }
+  }
+</style>
+</head>
+<body>
+  <div class="proto-title">Doctolib Connect</div>
+  <div class="proto-sub">First-run activation prototype — new user, post-registration</div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="status-bar">
+      <span>10:28</span>
+      <span class="icons">
+        <svg width="16" height="10" viewBox="0 0 16 10" fill="currentColor"><rect x="0" y="6" width="3" height="4" rx="0.5"/><rect x="4" y="4" width="3" height="6" rx="0.5"/><rect x="8" y="2" width="3" height="8" rx="0.5"/><rect x="12" y="0" width="3" height="10" rx="0.5"/></svg>
+        <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><path d="M7 8.5 A1 1 0 0 0 7 6 A1 1 0 0 0 7 8.5z M4 6 Q7 3 10 6 M2 4 Q7 -1 12 4"/></svg>
+        <svg width="22" height="10" viewBox="0 0 22 10" fill="none" stroke="currentColor" stroke-width="1"><rect x="0.5" y="0.5" width="19" height="9" rx="2"/><rect x="2" y="2" width="16" height="6" rx="1" fill="currentColor"/><rect x="20" y="3" width="1.5" height="4" rx="0.5" fill="currentColor"/></svg>
+      </span>
+    </div>
+
+    <div class="screens" id="screens">
+
+      <!-- ============ HUB ============ -->
+      <div class="screen active" id="hub">
+        <div class="app-header">
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="hub-greeting">
+          <div class="hub-eyebrow">Welcome to Connect</div>
+          <h1 class="hub-title">Let's set you up, <span id="greet-name">John</span></h1>
+          <p class="hub-sub">Four quick steps to start collaborating with your colleagues securely.</p>
+        </div>
+
+        <div class="progress-card">
+          <div class="progress-top">
+            <span class="progress-label">Your setup progress</span>
+            <span class="progress-count"><span id="progress-done">0</span><span class="slash"> / 4</span></span>
+          </div>
+          <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        </div>
+
+        <div class="checklist" id="checklist">
+          <!-- Verify -->
+          <div class="lever" id="lever-verify" data-lever="verify" onclick="openLever('verify')">
+            <div class="lever-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L4 6 v6 c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10 V6 L12 2z"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
+            <div class="lever-body">
+              <div class="lever-row1">
+                <div class="lever-title">Verify your identity</div>
+                <span class="pill todo" id="pill-verify">To do</span>
+              </div>
+              <div class="lever-desc" id="desc-verify">Confirm your profession to unlock secure messaging with verified colleagues.</div>
+            </div>
+            <div class="chev-arrow">›</div>
+          </div>
+
+          <!-- Contacts -->
+          <div class="lever" id="lever-contacts" data-lever="contacts" onclick="openLever('contacts')">
+            <div class="lever-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="lever-body">
+              <div class="lever-row1">
+                <div class="lever-title">Find your colleagues</div>
+                <span class="pill todo" id="pill-contacts">To do</span>
+              </div>
+              <div class="lever-desc" id="desc-contacts">Sync your contacts to instantly see who's already on Connect.</div>
+            </div>
+            <div class="chev-arrow">›</div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="lever" id="lever-notif" data-lever="notif" onclick="openLever('notif')">
+            <div class="lever-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <div class="lever-body">
+              <div class="lever-row1">
+                <div class="lever-title">Set your notifications</div>
+                <span class="pill todo" id="pill-notif">To do</span>
+              </div>
+              <div class="lever-desc" id="desc-notif">Decide how Connect reaches you — so nothing urgent slips through.</div>
+            </div>
+            <div class="chev-arrow">›</div>
+          </div>
+
+          <!-- Group chat -->
+          <div class="lever" id="lever-group" data-lever="group" onclick="openLever('group')">
+            <div class="lever-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h8M8 14h5"/></svg>
+            </div>
+            <div class="lever-body">
+              <div class="lever-row1">
+                <div class="lever-title">Start a group chat</div>
+                <span class="pill todo" id="pill-group">To do</span>
+              </div>
+              <div class="lever-desc" id="desc-group">Create your first team space to collaborate on cases.</div>
+            </div>
+            <div class="chev-arrow">›</div>
+          </div>
+        </div>
+
+        <div class="hub-footer">
+          <button class="btn ghost" onclick="skipToChats()">Skip for now</button>
+        </div>
+      </div>
+
+      <!-- ============ VERIFY: intro ============ -->
+      <div class="screen" id="verify-intro">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('hub')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <div class="icon-hero">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L4 6 v6 c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10 V6 L12 2z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <h1 class="screen-title">Verify your identity</h1>
+          <p class="lede">Verification confirms you're a healthcare professional. Until you're verified, you can't message other verified colleagues.</p>
+
+          <div class="info-list">
+            <div class="info-item">
+              <div class="info-dot">1</div>
+              <div class="info-text"><strong>A photo of your ID</strong>Any government-issued ID with your full name.</div>
+            </div>
+            <div class="info-item">
+              <div class="info-dot">2</div>
+              <div class="info-text"><strong>Your professional number</strong>RPPS, ADELI, or equivalent — we'll check it against your national register.</div>
+            </div>
+            <div class="info-item">
+              <div class="info-dot">3</div>
+              <div class="info-text"><strong>Takes under 2 minutes</strong>Review usually completes within 24 hours.</div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="goTo('verify-id')">Start verification</button>
+        </div>
+      </div>
+
+      <!-- ============ VERIFY: upload ID ============ -->
+      <div class="screen" id="verify-id">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('verify-intro')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="stepper">
+          <div class="step active">1</div>
+          <span class="step-chevron">›</span>
+          <div class="step">2</div>
+          <span class="step-chevron">›</span>
+          <div class="step">3</div>
+        </div>
+        <div class="content">
+          <h1 class="screen-title">Add your ID</h1>
+          <p class="lede">Take or upload a clear photo of a government-issued ID.</p>
+
+          <div class="upload-box" id="id-upload-box" onclick="fakeUploadId()">
+            <div class="up-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div class="up-title" id="id-upload-title">Tap to add a photo</div>
+            <div class="up-sub" id="id-upload-sub">Camera or photo library</div>
+          </div>
+
+          <p class="small">Your ID is encrypted and only used for verification. It's never shared with other users.</p>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary disabled" id="verify-id-next" onclick="tryVerifyNext()">Continue</button>
+        </div>
+      </div>
+
+      <!-- ============ VERIFY: right to practice ============ -->
+      <div class="screen" id="verify-rtp">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('verify-id')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="stepper">
+          <div class="step done">✓</div>
+          <span class="step-chevron">›</span>
+          <div class="step active">2</div>
+          <span class="step-chevron">›</span>
+          <div class="step">3</div>
+        </div>
+        <div class="content">
+          <h1 class="screen-title">Professional number</h1>
+          <p class="lede">Enter the registration number you use to practice. We'll verify it against your national register.</p>
+
+          <div class="field">
+            <label class="field-label">RPPS / ADELI number</label>
+            <input type="text" class="field-input" id="rpps-input" placeholder="11-digit number" inputmode="numeric" oninput="validateRpps()" />
+          </div>
+
+          <div class="field">
+            <label class="field-label">Country of registration</label>
+            <input type="text" class="field-input" value="France" readonly />
+          </div>
+
+          <p class="small">If your country or number isn't recognised, you can upload a proof of registration instead.</p>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary disabled" id="verify-rtp-next" onclick="submitVerification()">Submit for verification</button>
+        </div>
+      </div>
+
+      <!-- ============ VERIFY: submitted ============ -->
+      <div class="screen" id="verify-done">
+        <div class="app-header">
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="stepper">
+          <div class="step done">✓</div>
+          <span class="step-chevron">›</span>
+          <div class="step done">✓</div>
+          <span class="step-chevron">›</span>
+          <div class="step done">✓</div>
+        </div>
+        <div class="content" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:30px;">
+          <div class="icon-hero success">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="screen-title">Sent for review</h1>
+          <p class="lede">Most verifications complete within 24 hours. We'll notify you the moment you're verified — you can keep setting up in the meantime.</p>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="completeLever('verify'); goTo('hub')">Back to setup</button>
+        </div>
+      </div>
+
+      <!-- ============ CONTACTS: intro ============ -->
+      <div class="screen" id="contacts-intro">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('hub')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <div class="icon-hero">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h1 class="screen-title">Find your colleagues</h1>
+          <p class="lede">Connect will check your contacts against verified healthcare professionals already on the platform — so you can start conversations right away.</p>
+
+          <div class="info-list">
+            <div class="info-item">
+              <div class="info-dot">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              </div>
+              <div class="info-text"><strong>End-to-end encrypted</strong>Your address book stays on your device. We only match verified HCPs.</div>
+            </div>
+            <div class="info-item">
+              <div class="info-dot">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5 L12 19 M5 12 L19 12"/></svg>
+              </div>
+              <div class="info-text"><strong>Nothing is shared</strong>Your contacts never see that you're on Connect unless you message them.</div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="triggerContactsPermission()">Sync my contacts</button>
+          <button class="btn ghost" onclick="goTo('hub')">Not now</button>
+        </div>
+
+        <div class="ios-overlay" id="ios-perm" style="display:none;">
+          <div class="ios-modal">
+            <div class="ios-modal-body">
+              <div class="ios-modal-title">"Doctolib Connect" Would Like to Access Your Contacts</div>
+              <div class="ios-modal-msg">Connect uses your contacts to find colleagues who are already verified on the platform. Your address book is never uploaded.</div>
+            </div>
+            <div class="ios-modal-actions">
+              <button class="ios-modal-btn" onclick="denyContacts()">Don't Allow</button>
+              <button class="ios-modal-btn strong" onclick="allowContacts()">OK</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ CONTACTS: syncing ============ -->
+      <div class="screen" id="contacts-syncing">
+        <div class="app-header">
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="syncing-stage">
+          <div class="sync-ring"></div>
+          <h2 class="screen-title" style="margin-bottom:8px;">Finding your colleagues…</h2>
+          <p class="small">Checking your contacts against verified HCPs on Connect.</p>
+        </div>
+      </div>
+
+      <!-- ============ CONTACTS: success ============ -->
+      <div class="screen" id="contacts-success">
+        <div class="app-header">
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <div class="icon-hero success" style="margin:8px 0 16px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="screen-title">8 colleagues found on Connect</h1>
+          <p class="lede">They'll show up in your Chat list. You can message any verified HCP once your own verification is complete.</p>
+
+          <h2 class="section-title" style="margin-top:10px;">Your colleagues on Connect</h2>
+          <div class="contact-list" id="contacts-success-list"></div>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="completeLever('contacts'); goTo('hub')">Back to setup</button>
+        </div>
+      </div>
+
+      <!-- ============ NOTIF: intro ============ -->
+      <div class="screen" id="notif-intro">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('hub')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <div class="icon-hero">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <h1 class="screen-title">Stay responsive to your team</h1>
+          <p class="lede">Connect carries time-sensitive clinical conversations. Set how you want to be notified so nothing urgent is missed.</p>
+
+          <div class="info-list">
+            <div class="info-item">
+              <div class="info-dot">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="info-text"><strong>Direct messages</strong>Get notified when a colleague messages you directly.</div>
+            </div>
+            <div class="info-item">
+              <div class="info-dot">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+              </div>
+              <div class="info-text"><strong>Groups &amp; mentions</strong>Choose full updates or just mentions for each group.</div>
+            </div>
+            <div class="info-item">
+              <div class="info-dot">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="info-text"><strong>Quiet hours</strong>Pause non-urgent notifications overnight and on days off.</div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="triggerNotifPermission()">Continue</button>
+        </div>
+
+        <div class="ios-overlay" id="ios-notif-perm" style="display:none;">
+          <div class="ios-modal">
+            <div class="ios-modal-body">
+              <div class="ios-modal-title">"Doctolib Connect" Would Like to Send You Notifications</div>
+              <div class="ios-modal-msg">Notifications may include alerts, sounds, and icon badges. These can be configured in Settings.</div>
+            </div>
+            <div class="ios-modal-actions">
+              <button class="ios-modal-btn" onclick="denyNotif()">Don't Allow</button>
+              <button class="ios-modal-btn strong" onclick="allowNotif()">Allow</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ NOTIF: preferences ============ -->
+      <div class="screen" id="notif-prefs">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('notif-intro')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <h1 class="screen-title">Your preferences</h1>
+          <p class="lede">You can fine-tune these any time in Settings.</p>
+
+          <h2 class="section-title" style="margin-top:14px;">Messages</h2>
+          <div class="pref-row" onclick="togglePref('dm')">
+            <div class="pref-info">
+              <div class="pref-title">Direct messages</div>
+              <div class="pref-sub">Alerts for 1:1 conversations</div>
+            </div>
+            <div class="toggle" id="toggle-dm"><div class="toggle-dot"></div></div>
+          </div>
+          <div class="pref-row" onclick="togglePref('groups')">
+            <div class="pref-info">
+              <div class="pref-title">Group messages</div>
+              <div class="pref-sub">All new messages in your groups</div>
+            </div>
+            <div class="toggle" id="toggle-groups"><div class="toggle-dot"></div></div>
+          </div>
+          <div class="pref-row" onclick="togglePref('mentions')">
+            <div class="pref-info">
+              <div class="pref-title">Mentions only</div>
+              <div class="pref-sub">Only when someone tags you in a group</div>
+            </div>
+            <div class="toggle" id="toggle-mentions"><div class="toggle-dot"></div></div>
+          </div>
+
+          <h2 class="section-title" style="margin-top:22px;">Quiet hours</h2>
+          <div class="pref-row" onclick="togglePref('quiet')">
+            <div class="pref-info">
+              <div class="pref-title">Do not disturb</div>
+              <div class="pref-sub">Mute non-urgent notifications 10pm – 8am</div>
+            </div>
+            <div class="toggle" id="toggle-quiet"><div class="toggle-dot"></div></div>
+          </div>
+
+          <p class="small" style="margin-top:16px;">Urgent clinical alerts from group admins can override quiet hours. You can disable this in Settings.</p>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="savePrefs()">Save preferences</button>
+        </div>
+      </div>
+
+      <!-- ============ NOTIF: done ============ -->
+      <div class="screen" id="notif-done">
+        <div class="app-header">
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:30px;">
+          <div class="icon-hero success">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <h1 class="screen-title">Notifications set</h1>
+          <p class="lede">You're all tuned in. Adjust these any time from Settings → Notifications.</p>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="completeLever('notif'); goTo('hub')">Back to setup</button>
+        </div>
+      </div>
+
+      <!-- ============ GROUP: picker ============ -->
+      <div class="screen" id="group-picker">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('hub')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <h1 class="screen-title">Start a group chat</h1>
+          <p class="lede">Pick colleagues to start a secure team space. You can add more people any time.</p>
+
+          <div id="group-empty-hint" class="info-item" style="display:none; margin-bottom:14px;">
+            <div class="info-dot" style="color:var(--warning); border-color:var(--warning-soft);">!</div>
+            <div class="info-text"><strong>Sync your contacts first</strong>We'll show you colleagues already on Connect so you can pick them here.</div>
+          </div>
+
+          <h2 class="section-title" id="picker-section-title">Colleagues on Connect</h2>
+          <div class="contact-list" id="group-picker-list"></div>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary disabled" id="group-next" onclick="goToGroupName()">Next (<span id="group-selected-count">0</span> selected)</button>
+        </div>
+      </div>
+
+      <!-- ============ GROUP: name ============ -->
+      <div class="screen" id="group-name">
+        <div class="app-header">
+          <button class="back-btn" onclick="goTo('group-picker')">‹</button>
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content">
+          <h1 class="screen-title">Name your group</h1>
+          <p class="lede">Make it easy for your team to know what this space is for.</p>
+
+          <div class="field">
+            <label class="field-label">Group name</label>
+            <input type="text" class="field-input" id="group-name-input" placeholder="e.g. Cardiology on-call" maxlength="40" oninput="validateGroupName()" />
+          </div>
+
+          <div class="field">
+            <label class="field-label">Members (<span id="group-members-count">0</span>)</label>
+            <div class="chip-row" id="group-chips"></div>
+          </div>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary disabled" id="group-create-btn" onclick="createGroup()">Create group</button>
+        </div>
+      </div>
+
+      <!-- ============ GROUP: created ============ -->
+      <div class="screen" id="group-created">
+        <div class="app-header">
+          <div class="logo-dr">Doctolib</div>
+        </div>
+        <div class="content" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:30px;">
+          <div class="icon-hero success">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h1 class="screen-title"><span id="created-name">Your group</span> is live</h1>
+          <p class="lede">Your team members are being notified. Say hello and start the conversation.</p>
+        </div>
+        <div class="btn-stack">
+          <button class="btn primary" onclick="completeLever('group'); goTo('hub')">Back to setup</button>
+        </div>
+      </div>
+
+      <!-- ============ COMPLETION ============ -->
+      <div class="screen" id="completion">
+        <div class="completion-hero">
+          <div class="completion-badge">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1 class="completion-title">You're all set</h1>
+          <p class="completion-sub">Your Connect workspace is ready. Here's what's active:</p>
+        </div>
+        <div class="completion-summary">
+          <h3>Your setup</h3>
+          <div class="summary-item">
+            <span class="check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span>Identity sent for verification — we'll notify you when approved</span>
+          </div>
+          <div class="summary-item">
+            <span class="check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span>8 colleagues synced from your contacts</span>
+          </div>
+          <div class="summary-item">
+            <span class="check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span>Notifications tuned to your workflow</span>
+          </div>
+          <div class="summary-item">
+            <span class="check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+            <span><span id="summary-group">Your group</span> created and your team notified</span>
+          </div>
+        </div>
+        <div class="btn-stack mt-auto">
+          <button class="btn primary" onclick="goTo('chatlist')">Go to my chats</button>
+        </div>
+      </div>
+
+      <!-- ============ CHAT LIST ============ -->
+      <div class="screen" id="chatlist">
+        <div class="chat-header">
+          <h2>Chats</h2>
+          <div style="display:flex;gap:8px;">
+            <div class="ic-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
+            </div>
+            <div class="ic-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5 a2.12 2.12 0 0 1 3 3 L7 19l-4 1 1-4z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="search-bar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Search</span>
+        </div>
+
+        <!-- Finish-setup re-entry card (shown when activation incomplete) -->
+        <div class="setup-card" id="setup-card" onclick="goTo('hub')" style="display:none;">
+          <div class="setup-card-top">
+            <div class="setup-card-title">Finish setting up Connect</div>
+            <div class="setup-card-count"><span id="setup-card-done">0</span> of 4 complete</div>
+          </div>
+          <div class="setup-card-bar"><div class="setup-card-fill" id="setup-card-fill"></div></div>
+          <div class="setup-card-bottom">
+            <span class="setup-card-cta">Continue setup</span>
+            <span class="setup-card-arrow">›</span>
+          </div>
+        </div>
+
+        <div class="chat-banner" id="verify-banner">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <p><strong>Verification in review.</strong> You'll be able to message colleagues as soon as it's approved — usually within 24 hours.</p>
+        </div>
+
+        <div id="chat-rows" style="margin-top:8px;"></div>
+      </div>
+
+    </div>
+
+    <div class="toast" id="toast">
+      <div class="check">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span id="toast-msg">Step complete</span>
+    </div>
+  </div>
+
+  <button class="proto-reset" onclick="resetProto()">↻ Reset prototype</button>
+
+<script>
+  // ---------- State ----------
+  const state = {
+    name: 'John',
+    verify: false,
+    contacts: false,
+    notif: false,
+    group: false,
+    idUploaded: false,
+    rppsValid: false,
+    selectedContacts: [],
+    groupName: '',
+    prefs: { dm: true, groups: true, mentions: false, quiet: false },
+  };
+
+  const CONTACTS = [
+    { id: 1, name: 'Dr. Marie Laurent',    role: 'Cardiologist · Hôpital Saint-Louis',   color: '#0063F7' },
+    { id: 2, name: 'Dr. Thomas Weber',     role: 'General practitioner · Paris 11e',      color: '#00C896' },
+    { id: 3, name: 'Dr. Sophie Bernard',   role: 'Pediatrician · Clinique des Diaconesses', color: '#F7A100' },
+    { id: 4, name: 'Dr. Karim Haddad',     role: 'Radiologist · Groupe Imagerie Île-de-France', color: '#7C3AED' },
+    { id: 5, name: 'Dr. Elena Rossi',      role: 'Anesthesiologist · CHU Tenon',          color: '#D6336C' },
+    { id: 6, name: 'Dr. Lucas Moreau',     role: 'General practitioner · Paris 15e',      color: '#0B8E7B' },
+    { id: 7, name: 'Nadia Benali',         role: 'Nurse · Hôpital Bichat',                color: '#0063F7' },
+    { id: 8, name: 'Dr. Henri Dubois',     role: 'Dermatologist · Cabinet privé',         color: '#DC3545' },
+  ];
+
+  // ---------- Navigation ----------
+  function goTo(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.add('active');
+      el.scrollTop = 0;
+    }
+    // Hide iOS overlays whenever we leave their hosting screen
+    if (id !== 'contacts-intro') document.getElementById('ios-perm').style.display = 'none';
+    const notifPerm = document.getElementById('ios-notif-perm');
+    if (notifPerm && id !== 'notif-intro') notifPerm.style.display = 'none';
+    // Refresh chat list when shown
+    if (id === 'chatlist') renderChatList();
+  }
+
+  function openLever(lever) {
+    if (lever === 'verify')   goTo(state.verify ? 'hub' : 'verify-intro');
+    if (lever === 'contacts') goTo(state.contacts ? 'hub' : 'contacts-intro');
+    if (lever === 'notif') {
+      if (state.notif) { goTo('hub'); return; }
+      renderPrefToggles();
+      goTo('notif-intro');
+    }
+    if (lever === 'group') {
+      // Pre-populate the picker from synced contacts if available
+      renderGroupPicker();
+      goTo('group-picker');
+    }
+  }
+
+  function completeLever(lever) {
+    state[lever] = true;
+    updateHub();
+    showToast(leverLabel(lever) + ' complete');
+    // After all 4, auto-advance after a beat
+    const done = state.verify && state.contacts && state.notif && state.group;
+    if (done) {
+      setTimeout(() => goTo('completion'), 900);
+    }
+  }
+
+  function leverLabel(l) {
+    return { verify: 'Verification', contacts: 'Contact sync', notif: 'Notifications', group: 'Group chat' }[l];
+  }
+
+  // ---------- Hub rendering ----------
+  function updateHub() {
+    const levers = ['verify','contacts','notif','group'];
+    const doneCount = levers.filter(l => state[l]).length;
+    document.getElementById('progress-done').textContent = doneCount;
+    document.getElementById('progress-fill').style.width = (doneCount / 4 * 100) + '%';
+
+    levers.forEach(l => {
+      const lever = document.getElementById('lever-' + l);
+      const pill = document.getElementById('pill-' + l);
+      const desc = document.getElementById('desc-' + l);
+      if (state[l]) {
+        lever.classList.add('done');
+        pill.textContent = 'Done';
+        pill.classList.remove('todo');
+        pill.classList.add('done');
+        if (l === 'verify')   desc.textContent = 'Submitted for review — we\'ll notify you once approved.';
+        if (l === 'contacts') desc.textContent = '8 colleagues found on Connect.';
+        if (l === 'notif')    desc.textContent = notifSummary();
+        if (l === 'group')    desc.textContent = '"' + (state.groupName || 'Your group') + '" is live.';
+      } else {
+        lever.classList.remove('done');
+        pill.textContent = 'To do';
+        pill.classList.remove('done');
+        pill.classList.add('todo');
+      }
+    });
+  }
+  function notifSummary() {
+    const p = state.prefs;
+    if (p.quiet) return 'Preferences saved · Quiet hours on';
+    if (p.mentions && !p.groups) return 'Preferences saved · Mentions only';
+    return 'Preferences saved · You\'ll be notified';
+  }
+
+  // ---------- Verify ----------
+  function fakeUploadId() {
+    state.idUploaded = true;
+    const box = document.getElementById('id-upload-box');
+    box.classList.add('filled');
+    document.getElementById('id-upload-title').textContent = 'ID added ✓';
+    document.getElementById('id-upload-sub').textContent = 'driver-license-front.jpg · 2.1 MB';
+    document.getElementById('verify-id-next').classList.remove('disabled');
+  }
+  function tryVerifyNext() {
+    if (!state.idUploaded) return;
+    goTo('verify-rtp');
+  }
+  function validateRpps() {
+    const v = document.getElementById('rpps-input').value.replace(/\D/g,'');
+    state.rppsValid = v.length >= 9;
+    const btn = document.getElementById('verify-rtp-next');
+    if (state.rppsValid) btn.classList.remove('disabled');
+    else btn.classList.add('disabled');
+  }
+  function submitVerification() {
+    if (!state.rppsValid) return;
+    goTo('verify-done');
+  }
+
+  // ---------- Contacts ----------
+  function triggerContactsPermission() {
+    document.getElementById('ios-perm').style.display = 'flex';
+  }
+  function denyContacts() {
+    document.getElementById('ios-perm').style.display = 'none';
+  }
+  function allowContacts() {
+    document.getElementById('ios-perm').style.display = 'none';
+    goTo('contacts-syncing');
+    setTimeout(() => {
+      renderContactsSuccessList();
+      goTo('contacts-success');
+    }, 1600);
+  }
+  function renderContactsSuccessList() {
+    const list = document.getElementById('contacts-success-list');
+    list.innerHTML = CONTACTS.map(c => `
+      <div class="contact-row">
+        <div class="avatar" style="background:${c.color}">${initials(c.name)}</div>
+        <div class="contact-info">
+          <div class="contact-name">${c.name}</div>
+          <div class="contact-role">${c.role}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------- Notifications ----------
+  function triggerNotifPermission() {
+    document.getElementById('ios-notif-perm').style.display = 'flex';
+  }
+  function denyNotif() {
+    document.getElementById('ios-notif-perm').style.display = 'none';
+    // User can still set in-app preferences
+    goTo('notif-prefs');
+  }
+  function allowNotif() {
+    document.getElementById('ios-notif-perm').style.display = 'none';
+    goTo('notif-prefs');
+  }
+  function renderPrefToggles() {
+    ['dm','groups','mentions','quiet'].forEach(k => {
+      const el = document.getElementById('toggle-' + k);
+      if (state.prefs[k]) el.classList.add('on');
+      else el.classList.remove('on');
+    });
+  }
+  function togglePref(key) {
+    state.prefs[key] = !state.prefs[key];
+    // Groups and Mentions-only are mutually exclusive
+    if (key === 'groups' && state.prefs.groups) state.prefs.mentions = false;
+    if (key === 'mentions' && state.prefs.mentions) state.prefs.groups = false;
+    renderPrefToggles();
+  }
+  function savePrefs() {
+    goTo('notif-done');
+  }
+
+  // ---------- Group chat ----------
+  function renderGroupPicker() {
+    const list = document.getElementById('group-picker-list');
+    const hint = document.getElementById('group-empty-hint');
+    const sectionTitle = document.getElementById('picker-section-title');
+    state.selectedContacts = [];
+    updateGroupNextBtn();
+
+    if (!state.contacts) {
+      hint.style.display = 'flex';
+      sectionTitle.textContent = 'Suggested colleagues';
+    } else {
+      hint.style.display = 'none';
+      sectionTitle.textContent = 'Your colleagues on Connect';
+    }
+
+    list.innerHTML = CONTACTS.map(c => `
+      <div class="contact-row selectable" data-id="${c.id}" onclick="toggleContact(${c.id})">
+        <div class="avatar" style="background:${c.color}">${initials(c.name)}</div>
+        <div class="contact-info">
+          <div class="contact-name">${c.name}</div>
+          <div class="contact-role">${c.role}</div>
+        </div>
+        <div class="checkbox">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+    `).join('');
+  }
+  function toggleContact(id) {
+    const row = document.querySelector(`.contact-row[data-id="${id}"]`);
+    const idx = state.selectedContacts.indexOf(id);
+    if (idx > -1) {
+      state.selectedContacts.splice(idx, 1);
+      row.classList.remove('selected');
+    } else {
+      state.selectedContacts.push(id);
+      row.classList.add('selected');
+    }
+    updateGroupNextBtn();
+  }
+  function updateGroupNextBtn() {
+    const btn = document.getElementById('group-next');
+    document.getElementById('group-selected-count').textContent = state.selectedContacts.length;
+    if (state.selectedContacts.length >= 2) btn.classList.remove('disabled');
+    else btn.classList.add('disabled');
+  }
+  function goToGroupName() {
+    if (state.selectedContacts.length < 2) return;
+    const count = state.selectedContacts.length;
+    document.getElementById('group-members-count').textContent = count;
+    const chips = state.selectedContacts.map(id => {
+      const c = CONTACTS.find(x => x.id === id);
+      return `<span class="chip"><span class="chip-avatar" style="background:${c.color}">${initials(c.name)}</span>${c.name.replace(/^Dr\. /, 'Dr ')}</span>`;
+    }).join('');
+    document.getElementById('group-chips').innerHTML = chips;
+    document.getElementById('group-name-input').value = '';
+    validateGroupName();
+    goTo('group-name');
+  }
+  function validateGroupName() {
+    const v = document.getElementById('group-name-input').value.trim();
+    const btn = document.getElementById('group-create-btn');
+    if (v.length >= 2) btn.classList.remove('disabled');
+    else btn.classList.add('disabled');
+  }
+  function createGroup() {
+    const v = document.getElementById('group-name-input').value.trim();
+    if (v.length < 2) return;
+    state.groupName = v;
+    document.getElementById('created-name').textContent = '"' + v + '"';
+    document.getElementById('summary-group').textContent = '"' + v + '"';
+    goTo('group-created');
+  }
+
+  // ---------- Chat list ----------
+  function renderChatList() {
+    const rows = [];
+    // Group at top if created
+    if (state.group && state.groupName) {
+      const membersList = state.selectedContacts.map(id => CONTACTS.find(c => c.id === id)?.name.replace(/^Dr\. /, '')).filter(Boolean).join(', ');
+      rows.push(`
+        <div class="chat-row group">
+          <div class="avatar sz-lg">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="chat-content">
+            <div class="chat-top">
+              <div class="chat-name">${escapeHtml(state.groupName)} <span class="chat-new-badge">NEW</span></div>
+              <div class="chat-time">now</div>
+            </div>
+            <div class="chat-preview">You created this group with ${state.selectedContacts.length} members</div>
+          </div>
+        </div>
+      `);
+    }
+    // Synced contacts
+    if (state.contacts) {
+      CONTACTS.slice(0, 6).forEach(c => {
+        rows.push(`
+          <div class="chat-row">
+            <div class="avatar sz-lg" style="background:${c.color}">${initials(c.name)}</div>
+            <div class="chat-content">
+              <div class="chat-top">
+                <div class="chat-name">${c.name}</div>
+                <div class="chat-time">—</div>
+              </div>
+              <div class="chat-preview">${c.role}</div>
+            </div>
+          </div>
+        `);
+      });
+    } else {
+      rows.push(`
+        <div style="padding:40px 24px; text-align:center; color:var(--text-secondary);">
+          <p class="small" style="margin-bottom:12px;">No chats yet.</p>
+          <p class="small">Sync your contacts from setup to see colleagues here.</p>
+        </div>
+      `);
+    }
+
+    // Verification banner visibility
+    document.getElementById('verify-banner').style.display = state.verify ? 'flex' : 'none';
+
+    // Finish-setup re-entry card: shown whenever any lever is still incomplete
+    const levers = ['verify','contacts','notif','group'];
+    const doneCount = levers.filter(l => state[l]).length;
+    const setupCard = document.getElementById('setup-card');
+    if (doneCount < 4) {
+      setupCard.style.display = 'block';
+      document.getElementById('setup-card-done').textContent = doneCount;
+      document.getElementById('setup-card-fill').style.width = (doneCount / 4 * 100) + '%';
+    } else {
+      setupCard.style.display = 'none';
+    }
+
+    document.getElementById('chat-rows').innerHTML = rows.join('');
+  }
+
+  // ---------- Helpers ----------
+  function initials(name) {
+    const parts = name.replace(/^Dr\. /, '').split(' ');
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+  function skipToChats() {
+    goTo('chatlist');
+  }
+  function resetProto() {
+    state.verify = false; state.contacts = false; state.notif = false; state.group = false;
+    state.idUploaded = false; state.rppsValid = false;
+    state.selectedContacts = []; state.groupName = '';
+    state.prefs = { dm: true, groups: true, mentions: false, quiet: false };
+    document.getElementById('id-upload-box').classList.remove('filled');
+    document.getElementById('id-upload-title').textContent = 'Tap to add a photo';
+    document.getElementById('id-upload-sub').textContent = 'Camera or photo library';
+    document.getElementById('rpps-input').value = '';
+    document.getElementById('group-name-input').value = '';
+    document.getElementById('verify-id-next').classList.add('disabled');
+    document.getElementById('verify-rtp-next').classList.add('disabled');
+    renderPrefToggles();
+    updateHub();
+    goTo('hub');
+  }
+
+  // Init
+  updateHub();
+</script>
+</body>
+</html>
