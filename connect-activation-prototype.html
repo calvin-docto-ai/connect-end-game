@@ -65,6 +65,45 @@
   }
   .proto-reset:hover { background: rgba(6, 32, 73, 0.14); }
 
+  /* Scenario switch */
+  .scenario-switch {
+    margin-top: 26px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .scenario-title {
+    font-size: 11px; font-weight: 700; color: var(--text-secondary);
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .scenario-group {
+    display: inline-flex;
+    background: rgba(6, 32, 73, 0.06);
+    padding: 4px; border-radius: 14px;
+    gap: 4px;
+  }
+  .scenario-btn {
+    background: transparent;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .scenario-btn .scenario-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .scenario-btn .scenario-detail { font-size: 11px; font-weight: 500; opacity: 0.8; }
+  .scenario-btn:hover { color: var(--navy); }
+  .scenario-btn.active {
+    background: #fff;
+    color: var(--primary);
+    box-shadow: 0 2px 8px rgba(6, 32, 73, 0.1);
+  }
+  .scenario-btn.active .scenario-detail { color: var(--navy); opacity: 0.7; }
+  .scenario-hint { font-size: 11px; color: var(--text-muted); }
+
   /* Phone frame — iPhone 14 proportions (390 × 844pt) */
   .phone {
     width: 390px; height: 844px;
@@ -510,6 +549,13 @@
   .chat-row.group .avatar {
     background: var(--primary);
   }
+  .chat-row.team-doctolib {
+    background: linear-gradient(to right, rgba(0, 99, 247, 0.05), transparent);
+  }
+  .chat-row.team-doctolib .team-doctolib-avatar {
+    background: linear-gradient(135deg, var(--primary) 0%, #0052CC 100%);
+    color: #fff;
+  }
   .chat-content { flex: 1; min-width: 0; }
   .chat-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
   .chat-name { font-size: 15px; font-weight: 600; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -654,7 +700,7 @@
                 <div class="lever-title">Verify your identity</div>
                 <span class="pill todo" id="pill-verify">To do</span>
               </div>
-              <div class="lever-desc" id="desc-verify">Confirm your profession to unlock secure messaging with verified colleagues.</div>
+              <div class="lever-desc" id="desc-verify">Confirm your details to unlock secure messaging with verified healthcare professionals.</div>
             </div>
             <div class="chev-arrow">›</div>
           </div>
@@ -721,22 +767,9 @@
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L4 6 v6 c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10 V6 L12 2z"/><polyline points="9 12 11 14 15 10"/></svg>
           </div>
           <h1 class="screen-title">Verify your identity</h1>
-          <p class="lede">Verification confirms you're a healthcare professional. Until you're verified, you can't message other verified colleagues.</p>
+          <p class="lede" id="verify-intro-lede">Verification confirms you're a healthcare professional. Until you're verified, you can't message other verified colleagues.</p>
 
-          <div class="info-list">
-            <div class="info-item">
-              <div class="info-dot">1</div>
-              <div class="info-text"><strong>A photo of your ID</strong>Any government-issued ID with your full name.</div>
-            </div>
-            <div class="info-item">
-              <div class="info-dot">2</div>
-              <div class="info-text"><strong>Your professional number</strong>RPPS, ADELI, or equivalent — we'll check it against your national register.</div>
-            </div>
-            <div class="info-item">
-              <div class="info-dot">3</div>
-              <div class="info-text"><strong>Takes under 2 minutes</strong>Review usually completes within 24 hours.</div>
-            </div>
-          </div>
+          <div class="info-list" id="verify-intro-list"></div>
         </div>
         <div class="btn-stack">
           <button class="btn primary" onclick="goTo('verify-id')">Start verification</button>
@@ -749,13 +782,7 @@
           <button class="back-btn" onclick="goTo('verify-intro')">‹</button>
           <div class="logo-dr">Doctolib</div>
         </div>
-        <div class="stepper">
-          <div class="step active">1</div>
-          <span class="step-chevron">›</span>
-          <div class="step">2</div>
-          <span class="step-chevron">›</span>
-          <div class="step">3</div>
-        </div>
+        <div class="stepper" id="verify-id-stepper"></div>
         <div class="content">
           <h1 class="screen-title">Add your ID</h1>
           <p class="lede">Take or upload a clear photo of a government-issued ID.</p>
@@ -814,19 +841,13 @@
         <div class="app-header">
           <div class="logo-dr">Doctolib</div>
         </div>
-        <div class="stepper">
-          <div class="step done">✓</div>
-          <span class="step-chevron">›</span>
-          <div class="step done">✓</div>
-          <span class="step-chevron">›</span>
-          <div class="step done">✓</div>
-        </div>
+        <div class="stepper" id="verify-done-stepper"></div>
         <div class="content" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:30px;">
           <div class="icon-hero success">
             <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <h1 class="screen-title">Sent for review</h1>
-          <p class="lede">Most verifications complete within 24 hours. We'll notify you the moment you're verified — you can keep setting up in the meantime.</p>
+          <h1 class="screen-title" id="verify-done-title">Sent for review</h1>
+          <p class="lede" id="verify-done-lede">Most verifications complete within 24 hours. We'll notify you the moment you're verified — you can keep setting up in the meantime.</p>
         </div>
         <div class="btn-stack">
           <button class="btn primary" onclick="completeLever('verify'); goTo('hub')">Back to setup</button>
@@ -1110,7 +1131,7 @@
             <span class="check">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             </span>
-            <span>Identity sent for verification — we'll notify you when approved</span>
+            <span id="summary-verify">Identity sent for verification — we'll notify you when approved</span>
           </div>
           <div class="summary-item">
             <span class="check">
@@ -1187,11 +1208,65 @@
     </div>
   </div>
 
+  <div class="scenario-switch">
+    <div class="scenario-title">Scenario</div>
+    <div class="scenario-group" role="tablist">
+      <button class="scenario-btn active" data-s="physician" onclick="setScenario('physician')">
+        <div class="scenario-name">Physician</div>
+        <div class="scenario-detail">Dr. John · Anesthesiologist</div>
+      </button>
+      <button class="scenario-btn" data-s="non-physician" onclick="setScenario('non-physician')">
+        <div class="scenario-name">Non-physician</div>
+        <div class="scenario-detail">John · Medical secretary</div>
+      </button>
+    </div>
+    <div class="scenario-hint">Switching scenarios resets the prototype.</div>
+  </div>
+
   <button class="proto-reset" onclick="resetProto()">↻ Reset prototype</button>
 
 <script>
   // ---------- State ----------
+  const SCENARIOS = {
+    'physician': {
+      displayName: 'Dr. John',
+      profession: 'Anesthesiologist',
+      hasRtp: true,
+      verifySteps: 3,
+      introLede: 'Verification confirms you\'re a registered physician. Until you\'re verified, you can\'t message other verified colleagues.',
+      introItems: [
+        { title: 'A photo of your ID',       body: 'Any government-issued ID with your full name.' },
+        { title: 'Your professional number', body: 'RPPS, ADELI, or equivalent — we\'ll check it against your national register.' },
+        { title: 'Takes under 2 minutes',    body: 'Review usually completes within 24 hours.' },
+      ],
+      idContinueLabel: 'Continue',
+      doneTitle: 'Sent for review',
+      doneLede: 'Most verifications complete within 24 hours. We\'ll notify you the moment you\'re verified — you can keep setting up in the meantime.',
+      doneLeverDesc: 'Submitted for review — we\'ll notify you once approved.',
+      summaryText: 'Identity sent for verification — we\'ll notify you when approved',
+      showVerifyBanner: false,
+    },
+    'non-physician': {
+      displayName: 'John',
+      profession: 'Medical secretary',
+      hasRtp: false,
+      verifySteps: 2,
+      introLede: 'Verification confirms who you are. You don\'t need professional credentials — just an ID to get started.',
+      introItems: [
+        { title: 'A photo of your ID',    body: 'Any government-issued ID with your full name.' },
+        { title: 'Takes under a minute', body: 'You\'ll be able to start messaging as soon as your ID is confirmed.' },
+      ],
+      idContinueLabel: 'Submit for verification',
+      doneTitle: 'You\'re verified',
+      doneLede: 'Your identity is confirmed. You can message other verified colleagues right away — no waiting.',
+      doneLeverDesc: 'Verified and ready to go.',
+      summaryText: 'Identity verified — you\'re ready to message',
+      showVerifyBanner: false,
+    },
+  };
+
   const state = {
+    scenario: 'physician',
     name: 'John',
     verify: false,
     contacts: false,
@@ -1203,6 +1278,7 @@
     groupName: '',
     prefs: { dm: true, groups: true, mentions: false, quiet: false },
   };
+  function S() { return SCENARIOS[state.scenario]; }
 
   const CONTACTS = [
     { id: 1, name: 'Dr. Marie Laurent',    role: 'Cardiologist · Hôpital Saint-Louis',   color: '#0063F7' },
@@ -1246,6 +1322,7 @@
     }
   }
 
+  let pendingAdvance = null;
   function completeLever(lever) {
     state[lever] = true;
     updateHub();
@@ -1253,7 +1330,8 @@
     // After all 4, auto-advance after a beat
     const done = state.verify && state.contacts && state.notif && state.group;
     if (done) {
-      setTimeout(() => goTo('completion'), 900);
+      if (pendingAdvance) clearTimeout(pendingAdvance);
+      pendingAdvance = setTimeout(() => { pendingAdvance = null; goTo('completion'); }, 900);
     }
   }
 
@@ -1262,6 +1340,14 @@
   }
 
   // ---------- Hub rendering ----------
+  // Default "to do" copy for each lever — restored whenever a lever is not complete.
+  const LEVER_DEFAULTS = {
+    verify:   'Confirm your details to unlock secure messaging with verified healthcare professionals.',
+    contacts: 'Sync your contacts to instantly see who\'s already on Connect.',
+    notif:    'Decide how Connect reaches you — so nothing urgent slips through.',
+    group:    'Create your first team space to collaborate on cases.',
+  };
+
   function updateHub() {
     const levers = ['verify','contacts','notif','group'];
     const doneCount = levers.filter(l => state[l]).length;
@@ -1277,7 +1363,7 @@
         pill.textContent = 'Done';
         pill.classList.remove('todo');
         pill.classList.add('done');
-        if (l === 'verify')   desc.textContent = 'Submitted for review — we\'ll notify you once approved.';
+        if (l === 'verify')   desc.textContent = S().doneLeverDesc;
         if (l === 'contacts') desc.textContent = '8 colleagues found on Connect.';
         if (l === 'notif')    desc.textContent = notifSummary();
         if (l === 'group')    desc.textContent = '"' + (state.groupName || 'Your group') + '" is live.';
@@ -1286,6 +1372,8 @@
         pill.textContent = 'To do';
         pill.classList.remove('done');
         pill.classList.add('todo');
+        // Restore the original pre-interaction copy
+        desc.textContent = LEVER_DEFAULTS[l];
       }
     });
   }
@@ -1307,7 +1395,12 @@
   }
   function tryVerifyNext() {
     if (!state.idUploaded) return;
-    goTo('verify-rtp');
+    if (S().hasRtp) {
+      goTo('verify-rtp');
+    } else {
+      // Non-physician: skip professional number, go straight to verified
+      goTo('verify-done');
+    }
   }
   function validateRpps() {
     const v = document.getElementById('rpps-input').value.replace(/\D/g,'');
@@ -1458,6 +1551,28 @@
   // ---------- Chat list ----------
   function renderChatList() {
     const rows = [];
+    // Team Doctolib verification confirmation — appears once verify is complete,
+    // regardless of whether contacts have been synced.
+    if (state.verify) {
+      const approved = S().hasRtp;
+      const teamPreview = approved
+        ? 'Your identity and credentials have been confirmed. You can now message your colleagues and other verified healthcare professionals securely.'
+        : 'You\'re verified and ready to go. You can now message verified healthcare professionals securely.';
+      rows.push(`
+        <div class="chat-row team-doctolib">
+          <div class="avatar sz-lg team-doctolib-avatar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L4 5v6c0 5 3.5 9.5 8 11 4.5-1.5 8-6 8-11V5l-8-3z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div class="chat-content">
+            <div class="chat-top">
+              <div class="chat-name">Team Doctolib <span class="chat-new-badge">NEW</span></div>
+              <div class="chat-time">now</div>
+            </div>
+            <div class="chat-preview">${escapeHtml(teamPreview)}</div>
+          </div>
+        </div>
+      `);
+    }
     // Group at top if created
     if (state.group && state.groupName) {
       const membersList = state.selectedContacts.map(id => CONTACTS.find(c => c.id === id)?.name.replace(/^Dr\. /, '')).filter(Boolean).join(', ');
@@ -1493,16 +1608,22 @@
         `);
       });
     } else {
+      const firstLine = state.verify
+        ? 'Sync your contacts from setup to see your colleagues here.'
+        : 'No chats yet.';
+      const secondLine = state.verify
+        ? ''
+        : '<p class="small">Sync your contacts from setup to see colleagues here.</p>';
       rows.push(`
         <div style="padding:40px 24px; text-align:center; color:var(--text-secondary);">
-          <p class="small" style="margin-bottom:12px;">No chats yet.</p>
-          <p class="small">Sync your contacts from setup to see colleagues here.</p>
+          <p class="small" style="margin-bottom:12px;">${firstLine}</p>
+          ${secondLine}
         </div>
       `);
     }
 
-    // Verification banner visibility
-    document.getElementById('verify-banner').style.display = state.verify ? 'flex' : 'none';
+    // Verification banner visibility — only shown when scenario is still in review
+    document.getElementById('verify-banner').style.display = (state.verify && S().showVerifyBanner) ? 'flex' : 'none';
 
     // Finish-setup re-entry card: shown whenever any lever is still incomplete
     const levers = ['verify','contacts','notif','group'];
@@ -1517,6 +1638,62 @@
     }
 
     document.getElementById('chat-rows').innerHTML = rows.join('');
+  }
+
+  // ---------- Scenario ----------
+  function renderStepper(elId, totalSteps, activeStep /* 1-based, or 0 meaning "all done" */) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const parts = [];
+    for (let i = 1; i <= totalSteps; i++) {
+      let cls = '';
+      let label = i;
+      if (activeStep === 0 || i < activeStep) { cls = 'done'; label = '✓'; }
+      else if (i === activeStep) { cls = 'active'; }
+      parts.push(`<div class="step ${cls}">${label}</div>`);
+      if (i < totalSteps) parts.push('<span class="step-chevron">›</span>');
+    }
+    el.innerHTML = parts.join('');
+  }
+
+  function applyScenario() {
+    const s = S();
+
+    // Scenario buttons
+    document.querySelectorAll('.scenario-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.s === state.scenario);
+    });
+
+    // Hub greeting
+    document.getElementById('greet-name').textContent = s.displayName;
+
+    // Verify intro
+    document.getElementById('verify-intro-lede').textContent = s.introLede;
+    document.getElementById('verify-intro-list').innerHTML = s.introItems.map((item, i) => `
+      <div class="info-item">
+        <div class="info-dot">${i + 1}</div>
+        <div class="info-text"><strong>${item.title}</strong>${item.body}</div>
+      </div>
+    `).join('');
+
+    // Verify-id: stepper + CTA label
+    renderStepper('verify-id-stepper', s.verifySteps, 1);
+    document.getElementById('verify-id-next').textContent = s.idContinueLabel;
+
+    // Verify-done: stepper + title + lede
+    renderStepper('verify-done-stepper', s.verifySteps, 0);
+    document.getElementById('verify-done-title').textContent = s.doneTitle;
+    document.getElementById('verify-done-lede').textContent = s.doneLede;
+
+    // Completion summary — verify line
+    document.getElementById('summary-verify').textContent = s.summaryText;
+  }
+
+  function setScenario(s) {
+    if (state.scenario === s) return;
+    state.scenario = s;
+    const label = s === 'physician' ? 'Physician scenario' : 'Non-physician scenario';
+    resetProto({ message: label + ' loaded' });
   }
 
   // ---------- Helpers ----------
@@ -1537,24 +1714,61 @@
   function skipToChats() {
     goTo('chatlist');
   }
-  function resetProto() {
+  function resetProto(opts) {
+    opts = opts || {};
+    // Cancel any pending auto-advance so the completion screen doesn't appear mid-reset
+    if (pendingAdvance) { clearTimeout(pendingAdvance); pendingAdvance = null; }
+
+    // Reset all state
     state.verify = false; state.contacts = false; state.notif = false; state.group = false;
     state.idUploaded = false; state.rppsValid = false;
     state.selectedContacts = []; state.groupName = '';
     state.prefs = { dm: true, groups: true, mentions: false, quiet: false };
+
+    // Reset verification flow DOM
     document.getElementById('id-upload-box').classList.remove('filled');
     document.getElementById('id-upload-title').textContent = 'Tap to add a photo';
     document.getElementById('id-upload-sub').textContent = 'Camera or photo library';
     document.getElementById('rpps-input').value = '';
-    document.getElementById('group-name-input').value = '';
     document.getElementById('verify-id-next').classList.add('disabled');
     document.getElementById('verify-rtp-next').classList.add('disabled');
+
+    // Reset group flow DOM
+    document.getElementById('group-name-input').value = '';
+    document.getElementById('group-create-btn').classList.add('disabled');
+    document.getElementById('group-next').classList.add('disabled');
+    document.getElementById('group-selected-count').textContent = '0';
+    document.getElementById('group-members-count').textContent = '0';
+    document.getElementById('group-chips').innerHTML = '';
+    document.getElementById('group-picker-list').innerHTML = '';
+    document.querySelectorAll('#group-picker-list .contact-row').forEach(r => r.classList.remove('selected'));
+
+    // Reset summary text in completion + group-created screens
+    document.getElementById('created-name').textContent = 'Your group';
+    document.getElementById('summary-group').textContent = 'Your group';
+
+    // Reset contact-success hardcoded list
+    document.getElementById('contacts-success-list').innerHTML = '';
+
+    // Hide overlays (iOS permission prompts) and toast
+    document.getElementById('ios-perm').style.display = 'none';
+    const notifPerm = document.getElementById('ios-notif-perm');
+    if (notifPerm) notifPerm.style.display = 'none';
+    const toast = document.getElementById('toast');
+    toast.classList.remove('show');
+
+    // Re-render dynamic views
+    applyScenario();
     renderPrefToggles();
     updateHub();
     goTo('hub');
+
+    // Quick confirmation so it's clear the action fired
+    showToast(opts.message || 'Prototype reset');
   }
 
   // Init
+  applyScenario();
   updateHub();
 </script>
 </body>
