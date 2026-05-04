@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctolib – Expert Opinion Cardio Prototype (v2)</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════════════
+     RESET + BASE
+     ═══════════════════════════════════════════════════════════ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f6f8; color: #1a1a2e; font-size: 14px; min-height: 100vh; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ═══════════════════════════════════════════════════════════
+     SIDEBAR (matches v1 prototype – light, narrow)
+     ═══════════════════════════════════════════════════════════ */
+  .sidebar { position: fixed; left: 0; top: 0; width: 64px; height: 100vh; background: #fff; border-right: 1px solid #e0e4ea; display: flex; flex-direction: column; align-items: center; padding-top: 12px; z-index: 100; }
+  .sidebar-logo { width: 36px; height: 36px; background: #107aca; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; margin-bottom: 20px; }
+  .sidebar-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0; width: 100%; cursor: pointer; color: #6b7280; font-size: 10px; transition: color .15s; text-align: center; line-height: 1.2; }
+  .sidebar-item:hover, .sidebar-item.active { color: #107aca; }
+  .sidebar-item i { font-size: 18px; }
+  .sidebar-badge { position: absolute; top: 4px; right: 14px; background: #f59e0b; color: #fff; font-size: 9px; font-weight: 700; min-width: 16px; height: 16px; border-radius: 8px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+
+  /* ═══════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════ */
+  .header { position: fixed; top: 0; left: 64px; right: 0; height: 56px; background: #fff; border-bottom: 1px solid #e0e4ea; display: flex; align-items: center; padding: 0 24px; z-index: 90; gap: 16px; }
+  .search-bar { flex: 1; max-width: 420px; background: #f5f6f8; border: 1px solid #e0e4ea; border-radius: 24px; padding: 8px 16px; display: flex; align-items: center; gap: 8px; color: #9ca3af; font-size: 13px; }
+  .header-icons { margin-left: auto; display: flex; gap: 16px; align-items: center; color: #6b7280; font-size: 18px; }
+  .header-icons i { cursor: pointer; }
+  .avatar-header { width: 32px; height: 32px; border-radius: 50%; background: #107aca; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* ═══════════════════════════════════════════════════════════
+     LAYOUT
+     ═══════════════════════════════════════════════════════════ */
+  .main { margin-left: 64px; margin-top: 56px; min-height: calc(100vh - 56px); }
+  .screen { display: none; }
+  .screen.active { display: flex; min-height: calc(100vh - 56px); }
+
+  /* ═══════════════════════════════════════════════════════════
+     PATIENT FILE (matches v1 layout: content-area + right-panel)
+     ═══════════════════════════════════════════════════════════ */
+  .content-area { flex: 1; padding: 24px 28px; overflow-y: auto; }
+  .right-panel { width: 280px; background: #fff; border-left: 1px solid #e0e4ea; padding: 20px 16px; overflow-y: auto; flex-shrink: 0; }
+
+  .patient-header { margin-bottom: 20px; }
+  .patient-name { font-size: 22px; font-weight: 700; }
+  .patient-name .age { color: #9ca3af; font-weight: 400; font-size: 15px; margin-left: 6px; }
+  .patient-meta { color: #6b7280; font-size: 13px; margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+  .tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid #e0e4ea; }
+  .tab { padding: 10px 18px; font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .tab.active { color: #107aca; border-bottom-color: #107aca; }
+  .tab:hover { color: #107aca; }
+  .tabs-row { display: flex; align-items: center; justify-content: space-between; }
+  .start-btn-inline { background: #e84c3d; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .start-btn-inline:hover { background: #d43d2f; }
+
+  .top-row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .top-row .card { flex: 1; }
+  .top-row .memo-card { flex: 0 0 220px; }
+
+  .card { background: #fff; border: 1px solid #e0e4ea; border-radius: 12px; padding: 18px 20px; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .card-summary-line { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .card ul { padding-left: 18px; color: #374151; font-size: 13px; line-height: 1.8; }
+  .card ul li::marker { color: #9ca3af; }
+  .badge-red { background: #fde8e8; color: #d32f2f; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .memo-card { background: #fff; border: 1px solid #e0e4ea; border-radius: 12px; padding: 16px; min-width: 200px; }
+  .memo-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .memo-input { border: none; width: 100%; color: #9ca3af; font-size: 13px; outline: none; resize: none; min-height: 60px; font-family: inherit; }
+
+  .section-title { font-size: 16px; font-weight: 700; margin: 20px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .events-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .event-card { background: #fff; border: 1px solid #e0e4ea; border-radius: 10px; padding: 14px; }
+  .event-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .event-card-header h4 { font-size: 14px; font-weight: 700; }
+  .badge-active { background: #dcfce7; color: #16a34a; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .badge-controlled { background: #e0e4ea; color: #6b7280; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .badge-warning { background: #fef3c7; color: #92400e; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .event-dates { font-size: 11px; color: #9ca3af; margin-bottom: 6px; }
+  .event-desc { font-size: 12px; color: #6b7280; line-height: 1.5; }
+
+  .table-container { background: #fff; border: 1px solid #e0e4ea; border-radius: 10px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #f9fafb; text-align: left; padding: 10px 14px; font-weight: 600; color: #6b7280; border-bottom: 1px solid #e0e4ea; }
+  td { padding: 10px 14px; border-bottom: 1px solid #f0f1f3; }
+  .val-high { color: #d32f2f; font-weight: 600; }
+
+  /* Right panel sections (Care plan, Billing, ...) */
+  .rp-section { margin-bottom: 18px; }
+  .rp-section-title { font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .rp-item { padding: 7px 10px; font-size: 13px; color: #374151; cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 8px; transition: background .12s; }
+  .rp-item:hover { background: #f0f5ff; color: #107aca; }
+  .rp-item i { font-size: 14px; color: #9ca3af; width: 18px; text-align: center; }
+  .rp-item:hover i { color: #107aca; }
+  .rp-item.highlight { background: #107aca; color: #fff; border-radius: 8px; font-weight: 600; padding: 10px 12px; }
+  .rp-item.highlight i { color: #fff; }
+  .rp-item.highlight:hover { background: #0d6ab8; }
+  .rp-item .saved-dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #16a34a; }
+  .rp-item .count-pill { margin-left: auto; background: #ecfdf5; color: #16a34a; font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; }
+
+  /* Expert opinion received banner inside patient file */
+  .opinion-banner { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px; }
+  .opinion-banner-icon { width: 36px; height: 36px; border-radius: 8px; background: #16a34a; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .opinion-banner-content { flex: 1; }
+  .opinion-banner-title { font-weight: 700; font-size: 14px; color: #065f46; }
+  .opinion-banner-text { font-size: 12px; color: #065f46; margin-top: 4px; line-height: 1.6; }
+  .opinion-banner-link { color: #16a34a; font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 12px; }
+
+  /* CTA banner that appears once prescriptions are ready */
+  .send-cta-banner { background: linear-gradient(135deg, #107aca, #1d8cff); color: #fff; border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+  .send-cta-icon { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .send-cta-content { flex: 1; }
+  .send-cta-title { font-weight: 700; font-size: 14px; }
+  .send-cta-text { font-size: 12px; opacity: .9; margin-top: 2px; }
+  .send-cta-btn { background: #fff; color: #107aca; border: none; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* ═══════════════════════════════════════════════════════════
+     CONNECT INBOX
+     ═══════════════════════════════════════════════════════════ */
+  .connect-sidebar { width: 220px; background: #fff; border-right: 1px solid #e0e4ea; padding: 20px 12px; flex-shrink: 0; min-height: calc(100vh - 56px); }
+  .connect-sidebar-title { font-size: 13px; font-weight: 700; color: #6b7280; padding: 0 8px 12px; }
+  .connect-sidebar-item { padding: 10px 12px; font-size: 14px; color: #374151; cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 10px; margin-bottom: 2px; }
+  .connect-sidebar-item:hover { background: #f5f6f8; }
+  .connect-sidebar-item.active { background: #e8f4ff; color: #107aca; font-weight: 600; }
+  .connect-sidebar-item .new-badge { margin-left: auto; background: #e8f4ff; color: #107aca; font-size: 10px; padding: 1px 6px; border-radius: 6px; font-weight: 700; }
+
+  .connect-main { flex: 1; padding: 24px 32px; }
+  .connect-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .connect-title { font-size: 22px; font-weight: 700; }
+  .new-request-btn { background: #1d8cff; color: #fff; border: none; border-radius: 22px; padding: 9px 18px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .new-request-btn:hover { background: #107aca; }
+
+  .filter-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .toolbar-btn { background: #fff; border: 1px solid #e0e4ea; border-radius: 18px; padding: 7px 14px; font-size: 13px; color: #374151; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .toolbar-btn:hover { background: #f5f6f8; }
+  .toolbar-btn.active { background: #e8f4ff; border-color: #107aca; color: #107aca; }
+  .filter-clear { font-size: 13px; color: #107aca; cursor: pointer; }
+  .filter-advanced { margin-left: auto; font-size: 13px; color: #374151; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+  .inbox-table { width: 100%; background: #fff; border-radius: 10px; border-collapse: collapse; overflow: hidden; }
+  .inbox-table thead th { font-size: 12px; font-weight: 600; color: #6b7280; text-align: left; padding: 14px 18px; border-bottom: 1px solid #e0e4ea; background: #f9fafb; }
+  .inbox-table tbody td { padding: 16px 18px; border-bottom: 1px solid #f0f1f3; font-size: 13px; color: #374151; vertical-align: middle; }
+  .inbox-table tbody tr.unread td { background: #f8fbff; font-weight: 600; }
+  .inbox-table tbody tr.unread td.case-cell { color: #1a1a2e; }
+  .inbox-table tbody tr { cursor: pointer; transition: background .12s; }
+  .inbox-table tbody tr:hover { background: #f5f9ff; }
+  .contact-cell { display: flex; align-items: center; gap: 10px; }
+  .contact-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .contact-avatar.cardio { background: linear-gradient(135deg, #d32f2f, #ef4444); }
+  .contact-avatar.derma { background: #6366f1; }
+  .contact-avatar.gp { background: #16a34a; }
+  .status-tag { background: #e8f4ff; color: #107aca; font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 600; }
+  .status-tag.done { background: #dcfce7; color: #16a34a; }
+  .state-tag { background: #fff; border: 1px solid #e0e4ea; color: #374151; font-size: 11px; padding: 3px 10px; border-radius: 6px; }
+  .state-tag.received { background: #fef3c7; border-color: #fcd34d; color: #92400e; font-weight: 700; }
+  .unread-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #1d8cff; margin-right: 8px; vertical-align: middle; }
+
+  /* ═══════════════════════════════════════════════════════════
+     EXPERT RESPONSE (chat view)
+     ═══════════════════════════════════════════════════════════ */
+  .response-list { width: 360px; background: #fff; border-right: 1px solid #e0e4ea; flex-shrink: 0; }
+  .response-list-header { padding: 18px 18px 8px; border-bottom: 1px solid #f0f1f3; }
+  .response-list-title { font-size: 16px; font-weight: 700; }
+  .response-list-search { background: #f5f6f8; border-radius: 8px; padding: 8px 12px; font-size: 13px; color: #9ca3af; margin: 12px 0; display: flex; align-items: center; gap: 8px; }
+  .response-list-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .response-tab { padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 500; border: 1px solid #e0e4ea; color: #6b7280; cursor: pointer; }
+  .response-tab.active { background: #e8f4ff; border-color: #bdd5f5; color: #107aca; }
+  .response-list-item { padding: 12px 18px; border-bottom: 1px solid #f0f1f3; cursor: pointer; display: flex; gap: 10px; }
+  .response-list-item:hover { background: #f5f9ff; }
+  .response-list-item.active { background: #e8f4ff; }
+  .response-list-item.unread .item-title { font-weight: 700; }
+  .item-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+  .item-content { flex: 1; min-width: 0; }
+  .item-header-row { display: flex; justify-content: space-between; align-items: center; }
+  .item-title { font-size: 13px; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .item-date { font-size: 11px; color: #9ca3af; flex-shrink: 0; }
+  .item-snippet { font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .item-tag-row { display: flex; gap: 6px; margin-top: 6px; }
+
+  .response-thread { flex: 1; background: #fff; display: flex; flex-direction: column; }
+  .thread-header { padding: 14px 24px; border-bottom: 1px solid #e0e4ea; display: flex; align-items: center; justify-content: space-between; }
+  .thread-header-left { display: flex; align-items: center; gap: 12px; }
+  .thread-title { font-size: 16px; font-weight: 700; }
+  .thread-subtitle { font-size: 12px; color: #6b7280; }
+  .thread-status-row { padding: 12px 24px; border-bottom: 1px solid #f0f1f3; display: flex; align-items: center; gap: 12px; font-size: 13px; flex-wrap: wrap; }
+  .thread-billing { margin-left: auto; color: #107aca; cursor: pointer; font-weight: 600; }
+
+  .time-comparison { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 1px solid #a7f3d0; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #065f46; font-weight: 600; }
+  .time-comparison strong { color: #047857; font-weight: 800; }
+  .time-comparison .vs { color: #6b7280; font-weight: 400; }
+  .time-comparison .saved { background: #047857; color: #fff; padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+
+  /* "More actions" dropdown */
+  .more-actions-wrap { position: relative; }
+  .more-actions-btn { background: #1a1a2e; color: #fff; border: 1px solid #1a1a2e; font-size: 13px; cursor: pointer; padding: 9px 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+  .more-actions-btn:hover { background: #2a2a40; }
+  .more-actions-btn .chevron { transition: transform .2s; font-size: 10px; }
+  .more-actions-btn.active .chevron { transform: rotate(180deg); }
+  .more-actions-dropdown { position: absolute; top: calc(100% + 6px); right: 0; background: #fff; border: 1px solid #e0e4ea; border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,.18); min-width: 280px; z-index: 250; overflow: hidden; opacity: 0; pointer-events: none; transform: translateY(-6px); transition: all .15s; }
+  .more-actions-dropdown.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .more-actions-dropdown .qa-item { padding: 11px 14px; font-size: 13px; color: #374151; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f0f1f3; background: #fff; }
+  .more-actions-dropdown .qa-item:hover { background: #f0f5ff; color: #107aca; }
+  .more-actions-dropdown .qa-item:last-child { border-bottom: none; }
+  .more-actions-dropdown .qa-item i { width: 16px; text-align: center; color: #6b7280; font-size: 13px; }
+  .more-actions-dropdown .qa-item:hover i { color: #107aca; }
+  .more-actions-dropdown .qa-item.primary { background: #f0f5ff; color: #107aca; font-weight: 700; border-left: 3px solid #107aca; }
+  .more-actions-dropdown .qa-item.primary i { color: #107aca; }
+  .more-actions-dropdown .qa-item .new-pill { margin-left: auto; background: #1d8cff; color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 5px; font-weight: 700; }
+
+  .thread-body { flex: 1; padding: 22px 24px; overflow-y: auto; background: #f8fafc; }
+  .timeline-marker { text-align: center; margin: 18px 0 10px; font-size: 11px; color: #9ca3af; }
+  .msg { display: flex; gap: 10px; margin-bottom: 14px; }
+  .msg .msg-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+  .msg .msg-bubble { max-width: 78%; background: #fff; border: 1px solid #e0e4ea; border-radius: 14px; padding: 14px 16px; font-size: 13px; line-height: 1.55; color: #374151; }
+  .msg .msg-meta { font-size: 11px; color: #9ca3af; margin-top: 5px; }
+  .msg.right { flex-direction: row-reverse; }
+  .msg.right .msg-bubble { background: #e8f4ff; border-color: #bdd5f5; color: #1e3a8a; }
+  .msg.right .msg-meta { text-align: right; }
+  .msg-author { font-size: 12px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .msg.system { justify-content: center; }
+  .msg.system .msg-bubble { background: #f3f4f6; border: none; color: #6b7280; font-size: 12px; text-align: center; padding: 6px 16px; border-radius: 16px; }
+
+  .response-section { margin-top: 12px; padding: 12px 14px; background: #f9fafb; border-left: 3px solid #107aca; border-radius: 6px; }
+  .response-section-title { font-weight: 700; font-size: 13px; color: #1a1a2e; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .response-section-title i { color: #107aca; }
+  .response-section ul { margin-left: 18px; line-height: 1.7; }
+  .urgent-banner { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 12px; display: flex; align-items: center; gap: 8px; }
+
+  .thread-input { padding: 14px 24px; border-top: 1px solid #e0e4ea; background: #fff; display: flex; align-items: center; gap: 10px; }
+  .thread-input-emoji { color: #6b7280; font-size: 16px; cursor: pointer; }
+  .thread-input-field { flex: 1; background: #f5f6f8; border: 1px solid #e0e4ea; border-radius: 22px; padding: 10px 16px; font-size: 13px; color: #9ca3af; }
+  .thread-input-send { background: #107aca; color: #fff; border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+  /* ═══════════════════════════════════════════════════════════
+     MODAL (shared base)
+     ═══════════════════════════════════════════════════════════ */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .modal { background: #fff; border-radius: 16px; width: 860px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 24px 64px rgba(0,0,0,.18); transform: translateY(20px); transition: transform .25s; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid #e0e4ea; }
+  .modal-header h2 { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .modal-header-actions { display: flex; gap: 8px; }
+  .modal-header-actions button { background: none; border: none; color: #9ca3af; font-size: 18px; cursor: pointer; padding: 4px; border-radius: 6px; }
+  .modal-header-actions button:hover { background: #f0f1f3; color: #374151; }
+
+  .modal-body { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+  .modal-patient { background: #f9fafb; border: 1px solid #e0e4ea; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; align-items: center; gap: 14px; }
+  .modal-patient-avatar { width: 44px; height: 44px; border-radius: 50%; background: #107aca; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
+  .modal-patient-info { flex: 1; }
+  .modal-patient-name { font-size: 15px; font-weight: 700; }
+  .modal-patient-meta { font-size: 13px; color: #6b7280; margin-top: 2px; }
+  .modal-patient-contact { font-size: 13px; color: #107aca; }
+
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .ai-badge { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+  .field-input { width: 100%; border: 1px solid #e0e4ea; border-radius: 10px; padding: 11px 14px; font-size: 13px; color: #374151; line-height: 1.6; resize: none; outline: none; font-family: inherit; transition: border-color .15s; background: #fff; }
+  .field-input:focus { border-color: #107aca; }
+  .field-input.title-input { font-size: 14px; font-weight: 600; }
+  .field-textarea { min-height: 200px; }
+
+  .variables-section { margin-bottom: 16px; }
+  .variables-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .tags-container { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; background: #f0f5ff; border: 1px solid #bdd5f5; border-radius: 8px; padding: 6px 10px; font-size: 12px; color: #1e40af; }
+  .tag-icon { color: #6b7280; }
+  .tag-value { font-weight: 600; }
+  .tag-remove { background: none; border: none; color: #9ca3af; font-size: 12px; cursor: pointer; padding: 0 0 0 2px; }
+  .tag-remove:hover { color: #d32f2f; }
+
+  .attachments { display: flex; gap: 8px; flex-wrap: wrap; }
+  .attachment-chip { display: flex; align-items: center; gap: 6px; background: #f9fafb; border: 1px solid #e0e4ea; border-radius: 8px; padding: 7px 11px; font-size: 12px; color: #374151; }
+  .attachment-chip i { color: #107aca; }
+  .add-attachment { border: 1px dashed #bdd5f5; background: #f8faff; color: #107aca; cursor: pointer; }
+  .add-attachment:hover { background: #eef4ff; }
+
+  .modal-footer { padding: 14px 24px; border-top: 1px solid #e0e4ea; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .char-count { font-size: 12px; color: #9ca3af; }
+  .send-btn-group { display: flex; align-items: stretch; position: relative; }
+  .send-btn { background: #107aca; color: #fff; border: none; border-radius: 10px 0 0 10px; padding: 12px 22px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .send-btn:hover { background: #0d6ab8; }
+  .send-arrow { background: #0d6ab8; color: #fff; border: none; border-left: 1px solid rgba(255,255,255,.25); border-radius: 0 10px 10px 0; padding: 12px 10px; cursor: pointer; }
+
+  /* ── Medical impact panel inside the request modal ── */
+  .impact-panel { background: linear-gradient(135deg, #fef3c7, #fee2c7); border: 1px solid #fcd34d; border-radius: 10px; padding: 12px 14px; margin: 0 0 18px; display: flex; align-items: flex-start; gap: 10px; }
+  .impact-panel-icon { width: 32px; height: 32px; border-radius: 50%; background: #f59e0b; color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+  .impact-panel-content { flex: 1; }
+  .impact-panel-title { font-size: 12px; font-weight: 700; color: #92400e; margin-bottom: 3px; }
+  .impact-panel-text { font-size: 12px; color: #78350f; line-height: 1.5; }
+  .impact-panel-text strong { color: #1a1a2e; }
+  .impact-panel-source { font-size: 11px; color: #9a6f1a; margin-top: 4px; font-style: italic; }
+
+  /* ═══════════════════════════════════════════════════════════
+     PRESCRIPTION MODALS (Medication / Lab) – inline composer
+     ═══════════════════════════════════════════════════════════ */
+  .rx-modal .modal { width: 720px; }
+  .rx-section-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .eprescription-tag { background: #ecfdf5; color: #047857; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
+
+  .rx-search { width: 100%; background: #fff; border: 1px solid #e0e4ea; border-radius: 10px; padding: 10px 14px; font-size: 13px; display: flex; align-items: center; gap: 8px; color: #374151; position: relative; }
+  .rx-search input { border: none; outline: none; flex: 1; font-size: 13px; color: #1a1a2e; background: transparent; }
+  .rx-suggestions { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid #e0e4ea; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.08); z-index: 10; overflow: hidden; max-height: 320px; overflow-y: auto; }
+  .rx-sg-header { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; padding: 10px 14px 4px; }
+  .rx-sg-item { padding: 9px 14px; font-size: 13px; color: #374151; cursor: pointer; }
+  .rx-sg-item:hover { background: #f0f5ff; color: #107aca; }
+  .rx-sg-item.vidal { color: #107aca; font-weight: 600; }
+
+  .rx-line { background: #fff; border: 1px solid #e0e4ea; border-radius: 10px; padding: 12px 14px; margin-top: 10px; display: flex; gap: 12px; align-items: flex-start; }
+  .rx-line-content { flex: 1; }
+  .rx-line-name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+  .rx-line-detail { font-size: 12px; color: #6b7280; margin-top: 3px; line-height: 1.5; }
+  .rx-line-actions { display: flex; gap: 6px; }
+  .rx-line-icon { color: #6b7280; cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 13px; }
+  .rx-line-icon:hover { background: #f5f6f8; color: #d32f2f; }
+
+  .ai-suggest-banner { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 1px solid #ddd6fe; border-radius: 10px; padding: 10px 12px; font-size: 12px; color: #5b21b6; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; line-height: 1.5; }
+  .ai-suggest-banner .ai-suggest-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .ai-suggest-banner strong { color: #4c1d95; }
+
+  .rx-footer-row { padding: 14px 24px; border-top: 1px solid #e0e4ea; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .rx-consent { font-size: 12px; color: #374151; display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+  .rx-consent .radio { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .rx-sign-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .toggle-switch { width: 32px; height: 18px; background: #107aca; border-radius: 9px; position: relative; cursor: pointer; }
+  .toggle-switch::after { content: ''; position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; }
+  .rx-cancel { background: none; border: none; color: #6b7280; font-size: 13px; font-weight: 700; cursor: pointer; padding: 9px 14px; }
+  .rx-confirm { background: #107aca; color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .rx-confirm:hover { background: #0d6ab8; }
+
+  /* ═══════════════════════════════════════════════════════════
+     SEND DOCUMENTS TO PATIENT MODAL
+     ═══════════════════════════════════════════════════════════ */
+  .send-docs-modal .modal { width: 720px; }
+  .send-doc-card { background: #f9fafb; border: 1px solid #e0e4ea; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+  .send-doc-patient { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .send-doc-patient .dmp-tag { background: #fef2f2; color: #d32f2f; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .send-doc-patient .icons-mini { display: flex; gap: 4px; }
+  .send-doc-patient .icons-mini span { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+  .send-doc-email { font-size: 12px; color: #6b7280; margin-bottom: 10px; }
+  .send-doc-shared-toggle { font-size: 13px; color: #107aca; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .send-doc-list { padding-top: 8px; }
+  .send-doc-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .send-doc-item input[type=checkbox] { accent-color: #107aca; }
+  .send-doc-item-name { font-size: 13px; color: #374151; display: flex; align-items: center; gap: 6px; flex: 1; }
+  .signed-tag { background: #ecfdf5; color: #16a34a; font-size: 10px; padding: 1px 7px; border-radius: 8px; font-weight: 700; }
+  .encrypted-line { font-size: 12px; color: #6b7280; margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+
+  .send-message-block { margin-top: 18px; }
+  .send-message-textarea { width: 100%; border: 1px solid #107aca; border-radius: 10px; padding: 11px 14px; font-size: 13px; color: #374151; line-height: 1.6; resize: vertical; outline: none; min-height: 110px; font-family: inherit; }
+  .send-templates { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .send-template-chip { background: #f9fafb; border: 1px solid #e0e4ea; border-radius: 8px; padding: 6px 10px; font-size: 12px; color: #374151; cursor: pointer; }
+  .send-template-chip i { color: #6b7280; margin-right: 4px; }
+  .allow-reply-row { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 13px; color: #374151; }
+  .allow-reply-toggle { width: 32px; height: 18px; background: #d1d5db; border-radius: 9px; position: relative; cursor: pointer; flex-shrink: 0; }
+  .allow-reply-toggle::after { content: ''; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; background: #fff; border-radius: 50%; transition: left .15s; }
+  .allow-reply-toggle.on { background: #107aca; }
+  .allow-reply-toggle.on::after { left: 16px; }
+
+  .send-info-banner { background: #e8f4ff; border: 1px solid #bdd5f5; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #1e3a8a; margin-top: 16px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.6; }
+  .send-info-banner i { color: #107aca; margin-top: 2px; }
+
+  .send-docs-footer { padding: 14px 24px; border-top: 1px solid #e0e4ea; display: flex; justify-content: flex-end; gap: 10px; }
+  .btn-do-not-send { background: none; border: none; color: #6b7280; font-size: 13px; font-weight: 700; cursor: pointer; padding: 9px 18px; }
+  .btn-send-final { background: #107aca; color: #fff; border: none; border-radius: 8px; padding: 9px 22px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOAST + DESKTOP NOTIFICATION
+     ═══════════════════════════════════════════════════════════ */
+  .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #16a34a; color: #fff; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 2000; transition: transform .3s ease; max-width: 80vw; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .desktop-notif { position: fixed; top: 14px; right: 14px; width: 360px; background: rgba(40, 40, 50, .92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 14px; padding: 14px 16px; color: #fff; box-shadow: 0 14px 36px rgba(0,0,0,.4); z-index: 3000; opacity: 0; transform: translateY(-20px); transition: opacity .3s ease, transform .3s ease; cursor: pointer; }
+  .desktop-notif.show { opacity: 1; transform: translateY(0); }
+  .desktop-notif-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .desktop-notif-icon { width: 24px; height: 24px; background: #107aca; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 13px; }
+  .desktop-notif-app { flex: 1; font-size: 12px; color: #b6c2d3; }
+  .desktop-notif-time { font-size: 11px; color: #9ca3af; }
+  .desktop-notif-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .desktop-notif-body { font-size: 12px; color: #d1d5db; line-height: 1.4; }
+
+  /* ═══════════════════════════════════════════════════════════
+     STEP NAVIGATOR
+     ═══════════════════════════════════════════════════════════ */
+  .step-nav { position: fixed; bottom: 20px; right: 20px; background: #1a1a2e; color: #fff; border-radius: 14px; padding: 12px 16px; z-index: 1500; box-shadow: 0 12px 28px rgba(0,0,0,.25); display: flex; align-items: center; gap: 12px; max-width: 92vw; }
+  .step-nav-info { font-size: 12px; line-height: 1.3; max-width: 360px; }
+  .step-nav-info .step-current { font-weight: 700; font-size: 13px; }
+  .step-nav-info .step-name { color: #b6c2d3; font-size: 11px; margin-top: 1px; }
+  .step-nav-btn { background: #107aca; color: #fff; border: none; border-radius: 22px; padding: 8px 16px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .step-nav-btn:hover { background: #0d6ab8; }
+  .step-nav-btn.secondary { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
+  .step-nav-btn.secondary:hover { background: rgba(255,255,255,.18); }
+
+  /* Misc */
+  .sparkle { animation: sparkle 2s ease-in-out infinite; }
+  @keyframes sparkle { 0%,100% { opacity: 1; } 50% { opacity: .6; } }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SIDEBAR
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="sidebar">
+  <div class="sidebar-logo">D</div>
+  <div class="sidebar-item"><i class="fas fa-calendar"></i><span>Agenda</span></div>
+  <div class="sidebar-item"><i class="fas fa-arrow-right-arrow-left"></i><span>Patient<br>Flow</span></div>
+  <div class="sidebar-item active" id="navTasks"><i class="fas fa-check-circle"></i><span>Tasks</span></div>
+  <div class="sidebar-item"><i class="fas fa-address-book"></i><span>Contact</span></div>
+  <div class="sidebar-item" id="navConnect" onclick="goTo('inbox')">
+    <i class="fas fa-comment-dots"></i><span>Messaging</span>
+    <span class="sidebar-badge" id="connectBadge" style="display:none">1</span>
+  </div>
+  <div class="sidebar-item" id="navPatient" onclick="goTo('patient-file')"><i class="fas fa-users-cog"></i><span>Patient<br>Mgmt</span></div>
+  <div class="sidebar-item"><i class="fas fa-envelope"></i><span>E-mails</span></div>
+  <div class="sidebar-item"><i class="fas fa-file-import"></i><span>Doc Import</span></div>
+  <div class="sidebar-item"><i class="fas fa-euro-sign"></i><span>Billing</span></div>
+  <div class="sidebar-item"><i class="fas fa-chart-line"></i><span>Activity</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="header">
+  <div class="search-bar"><i class="fas fa-search"></i> Search for a patient</div>
+  <div class="header-icons">
+    <i class="fas fa-question-circle"></i>
+    <i class="fas fa-shuffle"></i>
+    <i class="fas fa-bell"></i>
+    <i class="fas fa-cog"></i>
+    <div class="avatar-header">CL</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MAIN APP
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="main">
+
+<!-- ───────────────────────────────────────────────────────────────────
+     SCREEN 1 – PATIENT FILE (initial — cardio context)
+     ─────────────────────────────────────────────────────────────────── -->
+<section class="screen active" id="screen-patient-file">
+  <div class="content-area">
+
+    <!-- Patient header -->
+    <div class="patient-header">
+      <div class="patient-name">Madame Sylviane ADAM <span class="age">65 years</span></div>
+      <div class="patient-meta">
+        <span>born LIGNAC</span>
+        <span>Female</span>
+        <span>28.02.1960</span>
+        <span><i class="fas fa-phone" style="font-size:11px"></i> 00 22 44 66 88</span>
+        <span><i class="fas fa-envelope" style="font-size:11px"></i> sylviane.adam@gmail.com</span>
+      </div>
+    </div>
+
+    <!-- Tabs + start consultation -->
+    <div class="tabs-row">
+      <div class="tabs">
+        <div class="tab active">Health</div>
+        <div class="tab">History</div>
+        <div class="tab">Financial</div>
+        <div class="tab">Administrative</div>
+      </div>
+      <button class="start-btn-inline"><i class="fas fa-play"></i> Start health observation</button>
+    </div>
+
+    <!-- Today's consultation reminder -->
+    <div class="card" style="background:#fff7ed;border-color:#fed7aa;margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:36px;height:36px;border-radius:8px;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+          <i class="fas fa-stethoscope"></i>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:14px;color:#92400e">Today's consultation – 04/05/2026</div>
+          <div style="font-size:12px;color:#78350f;margin-top:3px;line-height:1.6">
+            <strong>Reason:</strong> Progressive dyspnea on exertion (NYHA III) over 6 weeks, bilateral lower-limb edema, weight gain +3 kg in 3 weeks, nocturnal cough, persistent fatigue.<br>
+            <strong>Examination:</strong> BP 150/90 mmHg · HR 95 bpm · SpO₂ 96% · B3 gallop · bibasilar crackles · bilateral pitting edema (+).<br>
+            <strong>Office ECG:</strong> sinus rhythm, signs of LV hypertrophy (Sokolow > 35 mm), no acute ischemic changes.
+          </div>
+          <div style="font-size:12px;color:#78350f;margin-top:6px">
+            <strong>Clinical suspicion:</strong> de novo heart failure on a high-CV-risk profile (T2D, HTA, dyslipidemia, family Hx of MI).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary + memo row -->
+    <div class="top-row">
+      <div class="card">
+        <div class="card-title">Patient summary</div>
+        <div class="card-summary-line">Chronic multi-pathological patient with severe allergy</div>
+        <ul>
+          <li>Type 2 diabetes (since 2019, ALD), Hypertension, Dyslipidemia, Cerebrovascular accident in 2020, Splenectomy in 2012</li>
+          <li>Critical allergy to <span class="badge-red"><i class="fas fa-exclamation-triangle" style="font-size:10px"></i> Penicillin</span></li>
+          <li>Teacher, lives alone, active smoker (15 PY), BMI 28</li>
+          <li>Family history: Myocardial infarction (father at 60, uncle at 45)</li>
+          <li>Current treatment: Metformin 1000 mg ×2/day, Amlodipine 5 mg, Atorvastatin 20 mg, Aspirin 75 mg</li>
+          <li>Recent consultations: CV consultation · 04/05/26 · Diabetes follow-up · 13/03/26 · Vaccination · 12/03/25</li>
+          <li>Recent care plans: ECG · 04/05/26 · Laboratory result · 22/10/25</li>
+        </ul>
+      </div>
+      <div class="memo-card">
+        <div class="memo-title">Memo</div>
+        <textarea class="memo-input" placeholder="Add a note..."></textarea>
+      </div>
+    </div>
+
+    <!-- Health events -->
+    <div class="section-title">Health events <i class="fas fa-arrow-right" style="font-size:12px;color:#9ca3af"></i></div>
+    <div class="events-grid">
+      <div class="event-card">
+        <div class="event-card-header"><h4>Suspected heart failure</h4><span class="badge-warning">New</span></div>
+        <div class="event-dates">04/2026 &nbsp; — &nbsp; I-50.9</div>
+        <div class="event-desc">De novo dyspnea on exertion (NYHA III), peripheral edema, weight gain. Pending cardiology workup (NT-proBNP, TTE, Holter).</div>
+      </div>
+      <div class="event-card">
+        <div class="event-card-header"><h4>Type 2 diabetes</h4><span class="badge-active">Active</span></div>
+        <div class="event-dates">02/2019 &nbsp; ALD 6/6 &nbsp; E-11</div>
+        <div class="event-desc">Type 2 diabetes on Metformin 1000 mg ×2/day. Last HbA1c 7.8% (above target 7.0%). Quarterly monitoring.</div>
+      </div>
+      <div class="event-card">
+        <div class="event-card-header"><h4>Hypertension</h4><span class="badge-controlled">Uncontrolled</span></div>
+        <div class="event-dates">2018 &nbsp; — &nbsp; I-10</div>
+        <div class="event-desc">Essential hypertension on Amlodipine 5 mg. Office BP today 150/90 mmHg, above goal — therapeutic adjustment needed.</div>
+      </div>
+    </div>
+
+    <!-- Clinical indicators -->
+    <div class="section-title">Clinical indicators <i class="fas fa-arrow-right" style="font-size:12px;color:#9ca3af"></i></div>
+    <div style="font-weight:700;margin-bottom:8px;">Biology</div>
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Parameter</th><th>Last value</th><th>Date</th><th>Previous value</th><th>Date</th><th>Lower limit</th><th>Upper limit</th></tr></thead>
+        <tbody>
+          <tr><td>Systolic blood pressure (mmHg)</td><td class="val-high">150</td><td>04.05.26</td><td>148</td><td>13.03.26</td><td>110</td><td>140</td></tr>
+          <tr><td>Heart rate (bpm)</td><td class="val-high">95</td><td>04.05.26</td><td>82</td><td>13.03.26</td><td>60</td><td>90</td></tr>
+          <tr><td>LDL cholesterol (mg/dL)</td><td class="val-high">163</td><td>22.10.25</td><td>140</td><td>22.07.23</td><td>0</td><td>55</td></tr>
+          <tr><td>HbA1c (%)</td><td class="val-high">7.8</td><td>22.10.25</td><td>7.5</td><td>22.04.25</td><td>4</td><td>7</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right panel — original "Care plan" structure -->
+  <div class="right-panel">
+    <div class="rp-section">
+      <div class="rp-section-title">Care plan</div>
+      <div class="rp-item highlight" onclick="openRequestModal()">
+        <i class="fas fa-user-doctor"></i> Ask for expert opinion
+      </div>
+      <div class="rp-item"><i class="fas fa-clipboard-list"></i> Ongoing care plan</div>
+      <div class="rp-item" onclick="openMedRxModal()"><i class="fas fa-pills"></i> Medication prescription</div>
+      <div class="rp-item"><i class="fas fa-envelope"></i> Letter</div>
+      <div class="rp-item" onclick="openLabRxModal()"><i class="fas fa-flask"></i> Lab prescription</div>
+      <div class="rp-item"><i class="fas fa-layer-group"></i> Create a bundle</div>
+      <div class="rp-item"><i class="fas fa-ellipsis-h"></i> Others</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Billing</div>
+      <div class="rp-item"><i class="fas fa-file-invoice"></i> Ongoing bills</div>
+      <div class="rp-item"><i class="fas fa-plus"></i> New bill</div>
+      <div class="rp-item"><i class="fas fa-plus"></i> New IGeL Invoice</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Appointments</div>
+      <div class="rp-item"><i class="fas fa-calendar-plus"></i> New appointment</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Integrated care</div>
+      <div class="rp-item"><i class="fas fa-share-from-square"></i> Refer patient</div>
+      <div class="rp-item"><i class="fas fa-folder-open"></i> Create patient case</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Patient</div>
+      <div class="rp-item"><i class="fas fa-paper-plane"></i> New message to patient</div>
+      <div class="rp-item"><i class="fas fa-file-import"></i> Import document</div>
+      <div class="rp-item"><i class="fas fa-list-check"></i> Show tasks for this patient</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────────────────────────────────────────────────────────────────
+     SCREEN 2 – CONNECT INBOX
+     ─────────────────────────────────────────────────────────────────── -->
+<section class="screen" id="screen-inbox">
+  <div class="connect-sidebar">
+    <div class="connect-sidebar-title">Connect</div>
+    <div class="connect-sidebar-item"><i class="fas fa-comment-dots"></i> Chats</div>
+    <div class="connect-sidebar-item active"><i class="fas fa-user-doctor"></i> Tele-expertise <span class="new-badge">New</span></div>
+    <div class="connect-sidebar-item"><i class="fas fa-globe"></i> Organisation</div>
+  </div>
+  <div class="connect-main">
+    <div class="connect-header">
+      <div class="connect-title">Tele-expertise</div>
+      <button class="new-request-btn"><i class="fas fa-plus"></i> New request</button>
+    </div>
+
+    <div class="filter-toolbar">
+      <button class="toolbar-btn"><i class="fas fa-search"></i> Search</button>
+      <button class="toolbar-btn">Filter by <i class="fas fa-chevron-down" style="font-size:10px"></i></button>
+      <button class="toolbar-btn active">Multiple: Option 1 + 1 other <i class="fas fa-chevron-down" style="font-size:10px"></i></button>
+      <span class="filter-clear">Remove filters</span>
+      <span class="filter-advanced"><i class="fas fa-sliders"></i> Advanced filtering</span>
+    </div>
+
+    <table class="inbox-table">
+      <thead>
+        <tr>
+          <th>Contact</th>
+          <th>Case</th>
+          <th>Date <i class="fas fa-caret-up"></i></th>
+          <th>Status</th>
+          <th>State <i class="fas fa-caret-up"></i></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="unread" onclick="goTo('expert-response')">
+          <td>
+            <div class="contact-cell">
+              <span class="unread-dot"></span>
+              <div class="contact-avatar cardio">BR</div>
+              <span>Dr Bernard RIVIÈRE – Cardiology</span>
+            </div>
+          </td>
+          <td class="case-cell">Cardiology opinion – Suspicion of de novo heart failure (Mme ADAM)</td>
+          <td>05/05/2026</td>
+          <td><span class="status-tag">Ongoing</span></td>
+          <td><span class="state-tag received">Received</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="contact-cell">
+              <div class="contact-avatar derma">AA</div>
+              <span>Service Dermatologie – Hôpital Saint Lo...</span>
+            </div>
+          </td>
+          <td class="case-cell">Évaluation du risque de mélanome.</td>
+          <td>05/02/2025</td>
+          <td><span class="status-tag">Ongoing</span></td>
+          <td><span class="state-tag">Received</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="contact-cell">
+              <div class="contact-avatar gp">JD</div>
+              <span>Dr Jane Doe</span>
+            </div>
+          </td>
+          <td class="case-cell">Potential cutaneous lupus erythematosus</td>
+          <td>05/02/2025</td>
+          <td><span class="status-tag">Ongoing</span></td>
+          <td><span class="state-tag">Received</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="contact-cell">
+              <div class="contact-avatar gp">JM</div>
+              <span>Dr Jeanne MARTIN</span>
+            </div>
+          </td>
+          <td class="case-cell">Your first tele-expertise request</td>
+          <td>05/02/2025</td>
+          <td><span class="status-tag">Ongoing</span></td>
+          <td><span class="state-tag">Sent</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<!-- ───────────────────────────────────────────────────────────────────
+     SCREEN 3 – EXPERT RESPONSE (chat view)
+     ─────────────────────────────────────────────────────────────────── -->
+<section class="screen" id="screen-expert-response">
+  <div class="response-list">
+    <div class="response-list-header">
+      <div class="response-list-title">Tele-expertise <span style="color:#9ca3af;font-weight:500;font-size:13px">4</span></div>
+      <div class="response-list-search"><i class="fas fa-search"></i> Search</div>
+      <div class="response-list-tabs">
+        <span class="response-tab active">All</span>
+        <span class="response-tab">Unread</span>
+        <span class="response-tab">Tele-expertise</span>
+        <span class="response-tab">Favourites</span>
+      </div>
+    </div>
+
+    <div class="response-list-item active unread">
+      <div class="item-avatar" style="background:linear-gradient(135deg,#d32f2f,#ef4444)">BR</div>
+      <div class="item-content">
+        <div class="item-header-row">
+          <div class="item-title">Dr Bernard RIVIÈRE</div>
+          <div class="item-date">05/05/2026</div>
+        </div>
+        <div class="item-snippet">Suspicion of de novo heart failure</div>
+        <div class="item-tag-row">
+          <span class="status-tag" style="background:#dcfce7;color:#16a34a">Done</span>
+          <span style="font-size:11px;color:#9ca3af">Tele-expertise</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="response-list-item">
+      <div class="item-avatar" style="background:#6366f1">AA</div>
+      <div class="item-content">
+        <div class="item-header-row">
+          <div class="item-title">Dermato – Hôpital Saint Lo...</div>
+          <div class="item-date">05/02/2025</div>
+        </div>
+        <div class="item-snippet">Évaluation du risque de mélanome</div>
+        <div class="item-tag-row"><span class="status-tag">In progress</span></div>
+      </div>
+    </div>
+
+    <div class="response-list-item">
+      <div class="item-avatar" style="background:#16a34a">JD</div>
+      <div class="item-content">
+        <div class="item-header-row">
+          <div class="item-title">Dr Jane Doe</div>
+          <div class="item-date">04/02/2025</div>
+        </div>
+        <div class="item-snippet">Potential cutaneous lupus</div>
+        <div class="item-tag-row"><span class="status-tag">In progress</span></div>
+      </div>
+    </div>
+
+    <div class="response-list-item">
+      <div class="item-avatar" style="background:#f59e0b">JM</div>
+      <div class="item-content">
+        <div class="item-header-row">
+          <div class="item-title">Dr Jeanne MARTIN</div>
+          <div class="item-date">02/02/2025</div>
+        </div>
+        <div class="item-snippet">Your first tele-expertise request</div>
+        <div class="item-tag-row"><span class="status-tag">Sent</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="response-thread">
+    <div class="thread-header">
+      <div class="thread-header-left">
+        <div class="item-avatar" style="background:linear-gradient(135deg,#d32f2f,#ef4444);width:40px;height:40px;font-size:12px">BR</div>
+        <div>
+          <div class="thread-title">Cardiology opinion – Suspicion of de novo heart failure</div>
+          <div class="thread-subtitle">Tele-expertise · Dr Bernard RIVIÈRE (Cardiologist, La Pitié-Salpêtrière)</div>
+        </div>
+      </div>
+      <div class="more-actions-wrap">
+        <button class="more-actions-btn" id="moreActionsBtn" onclick="toggleMoreActions(event)">
+          More actions <i class="fas fa-chevron-down chevron"></i>
+        </button>
+        <div class="more-actions-dropdown" id="moreActionsDropdown">
+          <div class="qa-item primary" onclick="closeMoreActions(); goTo('patient-file-after');">
+            <i class="fas fa-folder-open"></i> Go to the patient file
+          </div>
+          <div class="qa-item" onclick="closeMoreActions();">
+            <i class="fas fa-share-from-square"></i> Refer a patient
+          </div>
+          <div class="qa-item" onclick="closeMoreActions();">
+            <i class="fas fa-calendar-day"></i> Take an appointment
+          </div>
+          <div class="qa-item" onclick="closeMoreActions();">
+            <i class="fas fa-list-check"></i> Add a task
+            <span class="new-pill">New</span>
+          </div>
+          <div class="qa-item" onclick="closeMoreActions();">
+            <i class="fas fa-paper-plane"></i> Send a message to the patient
+            <span class="new-pill">New</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="thread-status-row">
+      Status <span class="status-tag" style="background:#dcfce7;color:#16a34a">Done</span>
+      <span style="color:#6b7280">Sent <strong>04/05/2026 · 14:32</strong> · Replied <strong>05/05/2026 · 05:14</strong></span>
+      <span class="time-comparison">
+        <i class="fas fa-bolt" style="color:#047857"></i>
+        <strong>14h 42min</strong>
+        <span class="vs">vs ~75 days standard wait</span>
+        <span class="saved">~74 days saved</span>
+      </span>
+      <span class="thread-billing">Billing information</span>
+    </div>
+
+    <div class="thread-body">
+      <div class="timeline-marker">Mon, 4 May 2026</div>
+
+      <div class="msg right">
+        <div class="msg-avatar" style="background:#107aca">CL</div>
+        <div>
+          <div class="msg-bubble">
+            <div class="msg-author" style="color:#1e3a8a">Dr Camille LAURENT (GP) — request</div>
+            <strong>Cardiology opinion – Suspicion of de novo heart failure in 65-year-old high-CV-risk patient</strong><br><br>
+            65-year-old female, T2D, hypertension and dyslipidemia, presenting today with progressively worsening dyspnea on exertion over 6 weeks (NYHA III), bilateral lower-limb edema, +3 kg in 3 weeks, nocturnal cough and persistent fatigue.
+            <br><br>
+            <strong>Examination:</strong> BP 150/90, HR 95, SpO₂ 96%, B3 gallop, bibasilar crackles, bilateral pitting edema (+).
+            <strong>Office ECG:</strong> sinus rhythm, LVH (Sokolow >35 mm), no acute ischemic changes.
+            <br><br>
+            <strong>Background:</strong> CVA 2020, splenectomy 2012, severe penicillin allergy, smoker (15 PY), BMI 28. Father †MI 60, uncle MI 45.
+            <br><br>
+            <strong>Treatment:</strong> Metformin 1000 mg ×2/d, Amlodipine 5 mg, Atorvastatin 20 mg, Aspirin 75 mg.
+            <br><br>
+            Looking for diagnostic confirmation, etiological workup recommendations and therapeutic adjustment.
+          </div>
+          <div class="msg-meta">04/05/2026 · 14:32</div>
+        </div>
+      </div>
+
+      <div class="timeline-marker">Tue, 5 May 2026</div>
+
+      <div class="msg">
+        <div class="msg-avatar" style="background:linear-gradient(135deg,#d32f2f,#ef4444)">BR</div>
+        <div style="flex:1">
+          <div class="msg-bubble">
+            <div class="msg-author">Dr Bernard RIVIÈRE — Cardiology, La Pitié-Salpêtrière</div>
+            Thank you for this comprehensive request. The clinical picture is highly evocative of newly diagnosed heart failure on a high-CV-risk profile. My recommendations:
+
+            <div class="response-section">
+              <div class="response-section-title"><i class="fas fa-stethoscope"></i> 1 · Provisional diagnosis</div>
+              <strong>De novo heart failure</strong> — most likely <strong>HFpEF</strong> (preserved ejection fraction) given age, female sex, T2D, HTA and obesity. Underlying <strong>ischemic heart disease</strong> must be excluded given LVH on ECG, family history of premature MI and uncontrolled CV risk factors.
+            </div>
+
+            <div class="response-section" style="border-left-color:#16a34a;background:#ecfdf5">
+              <div class="response-section-title" style="color:#065f46"><i class="fas fa-user-doctor" style="color:#16a34a"></i> 2 · To be done now <span style="font-weight:500;color:#065f46">— by you (GP)</span></div>
+              <div style="font-weight:700;font-size:12px;color:#065f46;margin:6px 0 2px">Lab tests (today / within 48h)</div>
+              <ul>
+                <li><strong>NT-proBNP</strong> — gold-standard biomarker to confirm HF</li>
+                <li>Full lab panel: electrolytes (Na, K, Mg), creatinine + eGFR, ferritin, TSH, fasting glucose, HbA1c, complete lipid panel, CBC, CRP</li>
+              </ul>
+              <div style="font-weight:700;font-size:12px;color:#065f46;margin:10px 0 2px">Treatment to start tomorrow morning</div>
+              <ul>
+                <li><strong>Furosemide 40 mg</strong> — 1 tablet in the morning (loop diuretic, fluid overload)</li>
+                <li><strong>Ramipril 2.5 mg</strong> — 1 tablet in the morning (ACE inhibitor; <strong>replaces Amlodipine</strong>, I will titrate up at the in-person visit)</li>
+                <li>Continue Atorvastatin but <strong>aim for LDL &lt; 55 mg/dL</strong> in this very-high-risk profile</li>
+                <li>Continue Aspirin 75 mg and Metformin</li>
+                <li>Lifestyle: salt &lt; 5 g/day, fluid &lt; 1.5 L/day, smoking cessation (offer nicotine replacement)</li>
+              </ul>
+            </div>
+
+            <div class="response-section" style="border-left-color:#d32f2f;background:#fef2f2">
+              <div class="response-section-title" style="color:#991b1b"><i class="fas fa-heart-pulse" style="color:#d32f2f"></i> 3 · To be done at the in-person cardiology consultation <span style="font-weight:500;color:#991b1b">— by me</span></div>
+              <ul>
+                <li><strong>Transthoracic echocardiography (TTE)</strong> — done in my office</li>
+                <li><strong>24h Holter ECG</strong> — fitted at the visit, to rule out paroxysmal AF (palpitations reported)</li>
+                <li><strong>Coronary CT angiography or stress imaging</strong> — scheduled if TTE shows LV dysfunction or wall-motion abnormality</li>
+                <li>Therapeutic refinement based on TTE: titrate Ramipril, introduce <strong>Bisoprolol 2.5 mg</strong> if appropriate, beta-blocker titration</li>
+              </ul>
+            </div>
+
+            <div class="urgent-banner" style="background:#fee2e2;border-color:#fca5a5;color:#7f1d1d">
+              <i class="fas fa-calendar-check"></i>
+              <div>
+                <strong>In-person cardiology consultation needed within 1 week</strong> (brought forward from 2 weeks given the imaging + Holter to do).<br>
+                My secretary will contact Mrs ADAM <strong>today</strong> to book the slot.<br>
+                Daily weight monitoring at home (alert if +1 kg/day or +2 kg/3d). Return to ED if rapid worsening dyspnea or any chest pain.
+              </div>
+            </div>
+          </div>
+          <div class="msg-meta">05/05/2026 · 05:14 — answered in 14h 42min</div>
+        </div>
+      </div>
+
+      <div class="msg system">
+        <div class="msg-bubble">Tele-expertise closed by Dr Bernard RIVIÈRE</div>
+      </div>
+    </div>
+
+    <div class="thread-input">
+      <i class="fas fa-smile thread-input-emoji"></i>
+      <i class="fas fa-paperclip thread-input-emoji"></i>
+      <div class="thread-input-field">Enter your message</div>
+      <button class="thread-input-send"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────────────────────────────────────────────────────────────────
+     SCREEN 4 – PATIENT FILE (after expert opinion received)
+     – same layout as screen 1, but:
+       • green banner at top with the opinion summary
+       • Care plan: Medication & Lab prescription become the next steps
+       • once Rx is saved, a CTA banner appears to send docs to patient
+     ─────────────────────────────────────────────────────────────────── -->
+<section class="screen" id="screen-patient-file-after">
+  <div class="content-area">
+
+    <div class="patient-header">
+      <div class="patient-name">Madame Sylviane ADAM <span class="age">65 years</span></div>
+      <div class="patient-meta">
+        <span>born LIGNAC</span>
+        <span>Female</span>
+        <span>28.02.1960</span>
+        <span><i class="fas fa-phone" style="font-size:11px"></i> 00 22 44 66 88</span>
+        <span><i class="fas fa-envelope" style="font-size:11px"></i> sylviane.adam@gmail.com</span>
+      </div>
+    </div>
+
+    <div class="tabs-row">
+      <div class="tabs">
+        <div class="tab active">Health</div>
+        <div class="tab">History</div>
+        <div class="tab">Financial</div>
+        <div class="tab">Administrative</div>
+      </div>
+      <button class="start-btn-inline"><i class="fas fa-play"></i> Start health observation</button>
+    </div>
+
+    <!-- Expert opinion banner -->
+    <div class="opinion-banner">
+      <div class="opinion-banner-icon"><i class="fas fa-check"></i></div>
+      <div class="opinion-banner-content">
+        <div class="opinion-banner-title">Expert opinion received from Dr Bernard RIVIÈRE — replied in 14h 42min (vs ~75 days standard wait)</div>
+        <div class="opinion-banner-text">
+          <strong>Diagnosis:</strong> de novo heart failure (probable HFpEF) — exclude underlying CAD.<br>
+          <strong>Recommended treatment:</strong> Furosemide 40 mg + Ramipril 2.5 mg + lifestyle measures.<br>
+          <strong>In-person cardiology consultation within 1 week</strong> (cardiologist's secretary will contact the patient today).
+        </div>
+      </div>
+    </div>
+
+    <!-- Send-to-patient CTA (shows once at least one Rx is saved) -->
+    <div class="send-cta-banner" id="sendCtaBanner" style="display:none">
+      <div class="send-cta-icon"><i class="fas fa-paper-plane"></i></div>
+      <div class="send-cta-content">
+        <div class="send-cta-title">Documents ready to send to Mme ADAM</div>
+        <div class="send-cta-text"><span id="sendCtaCount">1 prescription</span> created and signed. Send now and notify the patient about the upcoming cardiology appointment.</div>
+      </div>
+      <button class="send-cta-btn" onclick="openSendDocsModal()">Send documents</button>
+    </div>
+
+    <!-- Summary + memo -->
+    <div class="top-row">
+      <div class="card">
+        <div class="card-title">Patient summary</div>
+        <div class="card-summary-line">Chronic multi-pathological patient with severe allergy</div>
+        <ul>
+          <li>Type 2 diabetes (since 2019, ALD), Hypertension, Dyslipidemia, Cerebrovascular accident in 2020, Splenectomy in 2012</li>
+          <li>Critical allergy to <span class="badge-red"><i class="fas fa-exclamation-triangle" style="font-size:10px"></i> Penicillin</span></li>
+          <li>Teacher, lives alone, active smoker (15 PY), BMI 28</li>
+          <li>Family history: Myocardial infarction (father at 60, uncle at 45)</li>
+          <li>Current treatment: Metformin 1000 mg ×2/day, Amlodipine 5 mg, Atorvastatin 20 mg, Aspirin 75 mg</li>
+        </ul>
+      </div>
+      <div class="memo-card">
+        <div class="memo-title">Memo</div>
+        <textarea class="memo-input">Cardio opinion received 05/05 — Furo + Ramipril started by GP, lab panel ordered. Cardio visit (TTE + Holter) within 1 week (RIVIÈRE).</textarea>
+      </div>
+    </div>
+
+    <!-- Health events -->
+    <div class="section-title">Health events <i class="fas fa-arrow-right" style="font-size:12px;color:#9ca3af"></i></div>
+    <div class="events-grid">
+      <div class="event-card" style="border-color:#a7f3d0;background:#ecfdf5">
+        <div class="event-card-header"><h4>Heart failure (HFpEF)</h4><span class="badge-active">Confirmed</span></div>
+        <div class="event-dates">05/2026 &nbsp; — &nbsp; I-50.9</div>
+        <div class="event-desc">Confirmed by Dr RIVIÈRE via tele-expertise. Lab tests + treatment started by GP. TTE + Holter at cardiology visit within 1 week.</div>
+      </div>
+      <div class="event-card">
+        <div class="event-card-header"><h4>Type 2 diabetes</h4><span class="badge-active">Active</span></div>
+        <div class="event-dates">02/2019 &nbsp; ALD 6/6 &nbsp; E-11</div>
+        <div class="event-desc">Type 2 diabetes on Metformin. HbA1c 7.8% — to monitor.</div>
+      </div>
+      <div class="event-card">
+        <div class="event-card-header"><h4>Hypertension</h4><span class="badge-controlled">Adjusting Tx</span></div>
+        <div class="event-dates">2018 &nbsp; — &nbsp; I-10</div>
+        <div class="event-desc">Switching from Amlodipine to Ramipril 2.5 mg per cardio recommendation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel — same Care plan, with prescription items as next-step entry points -->
+  <div class="right-panel">
+    <div class="rp-section">
+      <div class="rp-section-title">Care plan</div>
+      <div class="rp-item"><i class="fas fa-user-doctor"></i> Ask for expert opinion</div>
+      <div class="rp-item"><i class="fas fa-clipboard-list"></i> Ongoing care plan</div>
+      <div class="rp-item highlight" onclick="openMedRxModal()" id="rpMedRx">
+        <i class="fas fa-pills"></i> Medication prescription
+        <span id="rpMedRxBadge"></span>
+      </div>
+      <div class="rp-item"><i class="fas fa-envelope"></i> Letter</div>
+      <div class="rp-item highlight" style="background:#1d8cff" onclick="openLabRxModal()" id="rpLabRx">
+        <i class="fas fa-flask"></i> Lab prescription
+        <span id="rpLabRxBadge"></span>
+      </div>
+      <div class="rp-item"><i class="fas fa-layer-group"></i> Create a bundle</div>
+      <div class="rp-item"><i class="fas fa-ellipsis-h"></i> Others</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Billing</div>
+      <div class="rp-item"><i class="fas fa-file-invoice"></i> Ongoing bills</div>
+      <div class="rp-item"><i class="fas fa-plus"></i> New bill</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Appointments</div>
+      <div class="rp-item"><i class="fas fa-calendar-plus"></i> New appointment</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Integrated care</div>
+      <div class="rp-item"><i class="fas fa-share-from-square"></i> Refer patient</div>
+      <div class="rp-item"><i class="fas fa-folder-open"></i> Create patient case</div>
+    </div>
+    <div class="rp-section">
+      <div class="rp-section-title">Patient</div>
+      <div class="rp-item" onclick="openSendDocsModal()"><i class="fas fa-paper-plane"></i> New message to patient</div>
+      <div class="rp-item"><i class="fas fa-file-import"></i> Import document</div>
+      <div class="rp-item"><i class="fas fa-list-check"></i> Show tasks for this patient</div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     EXPERT REQUEST MODAL (cardio version)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalRequest">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-user-doctor" style="color:#107aca"></i> New Expert Opinion Request</h2>
+      <div class="modal-header-actions">
+        <button title="Expand"><i class="fas fa-expand"></i></button>
+        <button title="Edit"><i class="fas fa-pen"></i></button>
+        <button title="Close" onclick="closeRequestModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="impact-panel">
+        <div class="impact-panel-icon"><i class="fas fa-heart-pulse"></i></div>
+        <div class="impact-panel-content">
+          <div class="impact-panel-title">Why timely cardiology opinion matters for Mme ADAM</div>
+          <div class="impact-panel-text">
+            Each day of delay before cardiology consultation increases 1-year all-cause mortality by <strong>+0.25%</strong>, cardiovascular mortality by <strong>+0.13%</strong> and HF-specific mortality by <strong>+0.11%</strong>. Standard wait time today is <strong>~75 days</strong>. Expert opinion compresses this to <strong>&lt; 24h</strong> — meaningful absolute risk reduction in this very-high-CV-risk patient.
+          </div>
+          <div class="impact-panel-source">Source: European Heart Journal, 2024 — 68,000-patient cohort</div>
+        </div>
+      </div>
+
+      <div class="modal-patient">
+        <div class="modal-patient-avatar">SA</div>
+        <div class="modal-patient-info">
+          <div class="modal-patient-name">Madame Sylviane ADAM</div>
+          <div class="modal-patient-meta">Female · 28/02/1960 (65 years)</div>
+          <div class="modal-patient-contact">00 22 44 66 88 · sylviane.adam@gmail.com</div>
+        </div>
+        <i class="fas fa-ellipsis-vertical" style="color:#9ca3af;cursor:pointer"></i>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Title <span class="ai-badge"><i class="fas fa-wand-magic-sparkles sparkle" style="font-size:9px"></i> AI generated</span></div>
+        <input class="field-input title-input" value="Cardiology opinion – Suspicion of de novo heart failure in 65-year-old high cardiovascular risk patient (T2D, HTA, dyslipidemia, family Hx of MI)" />
+      </div>
+
+      <div class="field-group">
+        <div class="field-label">Description <span class="ai-badge"><i class="fas fa-wand-magic-sparkles sparkle" style="font-size:9px"></i> AI summary</span></div>
+        <textarea class="field-input field-textarea" rows="10">65-year-old female patient, followed for type 2 diabetes (ALD), hypertension and dyslipidemia, presenting today with progressively worsening dyspnea on exertion over 6 weeks (currently NYHA III), bilateral lower-limb edema, weight gain of 3 kg in 3 weeks, nocturnal cough and persistent fatigue.
+
+Examination: BP 150/90 mmHg, HR 95 bpm regular, SpO2 96% on room air. Cardiac auscultation finds a B3 gallop, pulmonary auscultation reveals bibasilar crackles, lower limbs show bilateral pitting edema (+).
+
+Office ECG: sinus rhythm, signs of LV hypertrophy (Sokolow >35 mm), no acute ischemic changes, possible Q waves V1-V3.
+
+Notable medical history: cerebrovascular accident in 2020 (no major sequelae), splenectomy in 2012, severe penicillin allergy. Active smoker (15 PY), BMI 28. Father deceased from myocardial infarction at age 60, uncle at 45.
+
+Current treatment: Metformin 1000 mg ×2/day, Amlodipine 5 mg/day, Atorvastatin 20 mg/day, Aspirin 75 mg/day.
+
+Clinical concern: probable de novo heart failure (HFpEF profile) with possible underlying ischemic heart disease given the high cardiovascular risk profile.
+
+Request for specialized cardiology opinion for diagnostic confirmation, etiological workup recommendations, and immediate therapeutic adjustment. Patient lives alone, currently very symptomatic, would benefit from rapid expert input.</textarea>
+      </div>
+
+      <div class="variables-section">
+        <div class="variables-title"><i class="fas fa-tags" style="color:#6b7280;font-size:13px"></i> Pre-filled clinical variables</div>
+        <div class="tags-container">
+          <div class="tag"><i class="fas fa-heart-pulse tag-icon"></i><span>Symptoms:</span><span class="tag-value">NYHA III dyspnea, peripheral edema, +3kg/3wk, nocturnal cough</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-gauge-high tag-icon"></i><span>BP / HR:</span><span class="tag-value">150/90 mmHg · 95 bpm</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-stethoscope tag-icon"></i><span>Examination:</span><span class="tag-value">B3 gallop, bibasilar crackles, bilateral pitting edema (+)</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-wave-square tag-icon"></i><span>Office ECG:</span><span class="tag-value">Sinus rhythm, LV hypertrophy (Sokolow >35mm)</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-flask tag-icon"></i><span>Recent biology:</span><span class="tag-value">LDL 163 mg/dL · HbA1c 7.8% · eGFR 68</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-dna tag-icon"></i><span>Family Hx:</span><span class="tag-value">MI father 60y, uncle 45y</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-notes-medical tag-icon"></i><span>Personal Hx:</span><span class="tag-value">T2D, HTA, dyslipidemia, CVA 2020, splenectomy 2012, penicillin allergy</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-capsules tag-icon"></i><span>Treatment:</span><span class="tag-value">Metformin 1000 ×2 · Amlodipine 5 · Atorvastatin 20 · Aspirin 75</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+          <div class="tag"><i class="fas fa-smoking tag-icon"></i><span>Lifestyle:</span><span class="tag-value">Active smoker (15 PY) · BMI 28</span><button class="tag-remove"><i class="fas fa-xmark"></i></button></div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <div class="field-label"><i class="fas fa-paperclip" style="color:#9ca3af;font-size:12px"></i> Related media</div>
+        <div class="attachments">
+          <div class="attachment-chip"><i class="fas fa-wave-square"></i> office_ECG_04052026.pdf</div>
+          <div class="attachment-chip"><i class="fas fa-flask"></i> biology_panel_22102025.pdf</div>
+          <div class="attachment-chip"><i class="fas fa-image"></i> ankle_edema_photo.jpg</div>
+          <div class="attachment-chip add-attachment"><i class="fas fa-plus"></i> Add media</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="char-count">2 134 / 20 000</div>
+      <div class="send-btn-group">
+        <button class="send-btn" onclick="sendRequest()"><i class="fas fa-paper-plane"></i> Send the request</button>
+        <button class="send-arrow"><i class="fas fa-chevron-up"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MEDICATION PRESCRIPTION MODAL (standalone, no consultation needed)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay rx-modal" id="modalMedRx">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-pills" style="color:#107aca"></i> Medication prescription
+        <span class="eprescription-tag" style="margin-left:8px"><i class="fas fa-circle" style="font-size:6px;color:#16a34a"></i> ePrescription</span>
+      </h2>
+      <div class="modal-header-actions">
+        <button title="Expand"><i class="fas fa-expand"></i></button>
+        <button title="Close" onclick="closeMedRxModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-patient">
+        <div class="modal-patient-avatar">SA</div>
+        <div class="modal-patient-info">
+          <div class="modal-patient-name">Madame Sylviane ADAM</div>
+          <div class="modal-patient-meta">Female · 28/02/1960 (65 years) · Penicillin allergy ⚠</div>
+          <div class="modal-patient-contact">sylviane.adam@gmail.com</div>
+        </div>
+      </div>
+
+      <div class="ai-suggest-banner">
+        <div class="ai-suggest-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <div>
+          <strong>AI suggestions based on Dr RIVIÈRE's tele-expertise reply:</strong>
+          start <strong>Furosemide 40 mg</strong> + <strong>Ramipril 2.5 mg</strong> (replaces Amlodipine). Continue Atorvastatin, Aspirin, Metformin.
+        </div>
+      </div>
+
+      <div class="rx-search">
+        <i class="fas fa-search" style="color:#6b7280"></i>
+        <input type="text" id="medRxSearch" placeholder="Add a drug or a model" onfocus="showMedSuggest()" oninput="showMedSuggest()" />
+        <div class="rx-suggestions" id="medRxSuggestions" style="display:none">
+          <div class="rx-sg-header">Most used models (cardio)</div>
+          <div class="rx-sg-item" onclick="addDrug('Furosemide')">Furosemide 40 mg — 1 tab in the morning</div>
+          <div class="rx-sg-item" onclick="addDrug('Ramipril')">Ramipril 2.5 mg — 1 tab in the morning</div>
+          <div class="rx-sg-item" onclick="addDrug('Bisoprolol')">Bisoprolol 2.5 mg — 1 tab in the morning</div>
+          <div class="rx-sg-item vidal"><i class="fas fa-search"></i> Vidal Advanced Search</div>
+        </div>
+      </div>
+
+      <div id="medRxLines"></div>
+
+    </div>
+    <div class="rx-footer-row">
+      <div class="rx-consent">
+        Did the patient consent to share this prescription execution data?
+        <i class="fas fa-info-circle" style="color:#6b7280"></i>
+        <label class="radio"><input type="radio" name="consentMed" /> Yes</label>
+        <label class="radio"><input type="radio" name="consentMed" checked /> No</label>
+      </div>
+      <div class="rx-sign-toggle">
+        <div class="toggle-switch"></div>
+        Sign the document
+        <i class="fas fa-info-circle" style="color:#6b7280"></i>
+      </div>
+      <button class="rx-cancel" onclick="closeMedRxModal()">CANCEL</button>
+      <button class="rx-confirm" onclick="confirmMedRx()">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     LAB PRESCRIPTION MODAL (standalone)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay rx-modal" id="modalLabRx">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-flask" style="color:#107aca"></i> Lab prescription</h2>
+      <div class="modal-header-actions">
+        <button title="Expand"><i class="fas fa-expand"></i></button>
+        <button title="Close" onclick="closeLabRxModal()"><i class="fas fa-xmark"></i></button>
+      </div>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-patient">
+        <div class="modal-patient-avatar">SA</div>
+        <div class="modal-patient-info">
+          <div class="modal-patient-name">Madame Sylviane ADAM</div>
+          <div class="modal-patient-meta">Female · 28/02/1960 (65 years)</div>
+          <div class="modal-patient-contact">sylviane.adam@gmail.com</div>
+        </div>
+      </div>
+
+      <div class="ai-suggest-banner">
+        <div class="ai-suggest-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
+        <div>
+          <strong>AI suggestion based on Dr RIVIÈRE's tele-expertise reply:</strong>
+          use the <strong>Heart failure – Initial workup</strong> template (NT-proBNP + electrolytes + creat + eGFR + ferritin + TSH + lipids + HbA1c).
+        </div>
+      </div>
+
+      <div class="rx-search">
+        <i class="fas fa-search" style="color:#6b7280"></i>
+        <input type="text" id="labRxSearch" placeholder="Search a model or analysis" onfocus="showLabSuggest()" oninput="showLabSuggest()" />
+        <div class="rx-suggestions" id="labRxSuggestions">
+          <div class="rx-sg-header">Models</div>
+          <div class="rx-sg-item" onclick="addLabTemplate('initial')">Heart failure – Initial workup (Insuffisance cardiaque – Bilan initial)</div>
+          <div class="rx-sg-item" onclick="addLabTemplate('diagnostic')">Heart failure – Diagnostic</div>
+          <div class="rx-sg-header">Biology analyses</div>
+          <div class="rx-sg-item">Anti-Cardiolipine</div>
+          <div class="rx-sg-item">Bicarbonates</div>
+          <div class="rx-sg-item vidal"><i class="fas fa-search"></i> Advanced search</div>
+        </div>
+      </div>
+
+      <div id="labRxLines"></div>
+
+    </div>
+    <div class="rx-footer-row">
+      <div class="rx-consent">
+        Did the patient consent to share this prescription execution data?
+        <i class="fas fa-info-circle" style="color:#6b7280"></i>
+        <label class="radio"><input type="radio" name="consentLab" /> Yes</label>
+        <label class="radio"><input type="radio" name="consentLab" checked /> No</label>
+      </div>
+      <div class="rx-sign-toggle">
+        <div class="toggle-switch"></div>
+        Sign the document
+      </div>
+      <button class="rx-cancel" onclick="closeLabRxModal()">CANCEL</button>
+      <button class="rx-confirm" onclick="confirmLabRx()">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SEND DOCUMENTS TO PATIENT MODAL
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay send-docs-modal" id="modalSendDocs">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header" style="justify-content:center;position:relative">
+      <h2 style="text-align:center">Send documents to the patient</h2>
+      <button title="Close" onclick="closeSendDocsModal()" style="position:absolute;right:18px;top:14px;background:none;border:none;color:#6b7280;font-size:18px;cursor:pointer"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="modal-body">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px">Check details below:</div>
+
+      <div class="send-doc-card">
+        <div class="send-doc-patient">
+          ADAM Sylviane <span class="dmp-tag">DMP</span>
+          <div class="icons-mini">
+            <span style="background:#107aca">D</span>
+            <span style="background:#f59e0b"><i class="fas fa-user" style="font-size:9px"></i></span>
+            <span style="background:#6366f1"><i class="fas fa-users" style="font-size:9px"></i></span>
+          </div>
+        </div>
+        <div class="send-doc-email">sylviane.adam@gmail.com</div>
+        <div class="send-doc-shared-toggle"><span id="sharedDocCount">2 shared documents</span> <i class="fas fa-chevron-up" style="font-size:11px"></i></div>
+        <div class="send-doc-list" id="sendDocList">
+          <!-- Filled dynamically -->
+        </div>
+        <div class="encrypted-line"><i class="fas fa-shield-halved" style="color:#16a34a"></i> Encrypted documents</div>
+      </div>
+
+      <div class="send-message-block">
+        <div class="field-label" style="font-weight:700;color:#374151">Send message to patient <span style="color:#6b7280;font-weight:500">(optional)</span></div>
+        <textarea class="send-message-textarea" id="sendMessageText">Dear Mrs ADAM,
+
+Following our consultation today and the cardiology opinion provided by Dr Bernard RIVIÈRE, please find attached:
+
+• A medication prescription for two new treatments to start tomorrow morning: Furosemide 40 mg and Ramipril 2.5 mg (1 tablet each, in the morning). Continue Metformin, Atorvastatin and Aspirin as usual. Stop Amlodipine.
+• A laboratory prescription — please have the blood test (including NT-proBNP) done within 48 hours.
+
+Dr RIVIÈRE's secretary will contact you today to book an in-person cardiology appointment within the next week. The cardiac echocardiography and 24h Holter ECG will be performed during this visit, so there's nothing more to schedule on your side.
+
+Please weigh yourself every morning (alert me if +1 kg in 1 day or +2 kg in 3 days), reduce salt intake (&lt; 5 g/day) and fluid intake (&lt; 1.5 L/day). Go to the emergency department immediately if your shortness of breath worsens rapidly or if you experience any chest pain.
+
+Best regards,
+Dr Camille LAURENT</textarea>
+        <div class="send-templates">
+          <div class="send-template-chip">Heart failure – first Rx</div>
+          <div class="send-template-chip">Doc shared after consult.</div>
+          <div class="send-template-chip">Send doc + book appt</div>
+          <div class="send-template-chip"><i class="fas fa-file-lines"></i> All templates</div>
+        </div>
+        <div class="allow-reply-row">
+          <div class="allow-reply-toggle on" onclick="this.classList.toggle('on')"></div>
+          Allow patient to reply
+        </div>
+      </div>
+
+      <div class="send-info-banner">
+        <i class="fas fa-info-circle"></i>
+        <div>Mrs ADAM has a Doctolib account. Documents will be shared securely via her patient portal. Please ensure shared information is in line with the principles of data protection and medical secrecy.</div>
+      </div>
+    </div>
+
+    <div class="send-docs-footer">
+      <button class="btn-do-not-send" onclick="closeSendDocsModal()">DO NOT SEND</button>
+      <button class="btn-send-final" onclick="sendDocsFinal()">SEND</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TOAST + DESKTOP NOTIFICATION
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg">Sent successfully!</span></div>
+
+<div class="desktop-notif" id="desktopNotif" onclick="onNotifClick()">
+  <div class="desktop-notif-header">
+    <div class="desktop-notif-icon">D</div>
+    <div class="desktop-notif-app">DOCTOLIB CONNECT</div>
+    <div class="desktop-notif-time">now</div>
+  </div>
+  <div class="desktop-notif-title">Expert opinion received</div>
+  <div class="desktop-notif-body">Dr Bernard RIVIÈRE (Cardiology) replied to your request for Mrs ADAM Sylviane — 14h 42min after sending.</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     STEP NAVIGATOR (helps walk through the demo)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div class="step-nav" id="stepNav">
+  <div class="step-nav-info">
+    <div class="step-current"><span id="stepNum">1</span> / 8 — <span id="stepLabel">Patient file</span></div>
+    <div class="step-name" id="stepHint">Click "Ask for expert opinion" in the right panel</div>
+  </div>
+  <button class="step-nav-btn secondary" onclick="prevStep()">← Prev</button>
+  <button class="step-nav-btn" onclick="nextStep()">Next <i class="fas fa-arrow-right" style="font-size:10px"></i></button>
+</div>
+
+
+<script>
+  /* ═══════════════════════════════════════════════════════════
+     STEPS DEFINITION (8 steps, end-to-end)
+     ═══════════════════════════════════════════════════════════ */
+  const steps = [
+    { id: 'patient-file',       screenId: 'screen-patient-file',       label: 'Patient file (cardio context)',        hint: 'Click "Ask for expert opinion" in the right panel — or use Next →' },
+    { id: 'request',            screenId: 'screen-patient-file',       label: 'New expert opinion request',           hint: 'Review the AI-prefilled request and click "Send the request"' },
+    { id: 'inbox',              screenId: 'screen-inbox',              label: 'Connect inbox – response received',    hint: 'Click the unread row to open the cardiologist\'s response' },
+    { id: 'expert-response',    screenId: 'screen-expert-response',    label: 'Cardiologist\'s response',             hint: 'Click "More actions" → "Go to the patient file"' },
+    { id: 'patient-file-after', screenId: 'screen-patient-file-after', label: 'Patient file (post-opinion)',          hint: 'Click "Medication prescription" in the right panel' },
+    { id: 'med-rx',             screenId: 'screen-patient-file-after', label: 'Medication prescription',              hint: 'Add Furosemide + Ramipril, then click CONFIRM' },
+    { id: 'lab-rx',             screenId: 'screen-patient-file-after', label: 'Lab prescription',                     hint: 'Select "Heart failure – Initial workup", then click CONFIRM' },
+    { id: 'send',               screenId: 'screen-patient-file-after', label: 'Send documents to patient',            hint: 'Review the message and click SEND' }
+  ];
+  let currentStep = 0;
+
+  /* ═══════════════════════════════════════════════════════════
+     SCREEN NAVIGATION
+     ═══════════════════════════════════════════════════════════ */
+  function goTo(id) {
+    const screenId = 'screen-' + id;
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if (target) target.classList.add('active');
+    window.scrollTo(0, 0);
+    syncSidebar(id);
+    // Keep the step navigator in sync when navigating manually
+    setStepFromGoTo(id);
+  }
+  function syncSidebar(id) {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    if (id === 'inbox' || id === 'expert-response') {
+      document.getElementById('navConnect').classList.add('active');
+    } else if (id.startsWith('patient-file')) {
+      document.getElementById('navTasks').classList.add('active');
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     STEP NAVIGATOR
+     ═══════════════════════════════════════════════════════════ */
+  function setStep(idx) {
+    currentStep = Math.max(0, Math.min(steps.length - 1, idx));
+    const step = steps[currentStep];
+    goTo(step.screenId.replace('screen-', ''));
+    document.getElementById('stepNum').textContent = currentStep + 1;
+    document.getElementById('stepLabel').textContent = step.label;
+    document.getElementById('stepHint').textContent = step.hint;
+
+    // Side effects
+    closeAllModals();
+    closeMoreActions();
+    if (step.id === 'request')  openRequestModal();
+    if (step.id === 'med-rx')   openMedRxModal();
+    if (step.id === 'lab-rx')   openLabRxModal();
+    if (step.id === 'send')     openSendDocsModal();
+  }
+  function nextStep() { setStep(currentStep + 1); }
+  function prevStep() { setStep(currentStep - 1); }
+  function setStepFromGoTo(id) {
+    // If the current step already maps to this screen, don't move backwards
+    // (several steps share the same screenId — e.g. med-rx, lab-rx, send all live on patient-file-after).
+    const currentScreenId = steps[currentStep] && steps[currentStep].screenId.replace('screen-', '');
+    if (currentScreenId === id) return;
+    const idx = steps.findIndex(s => s.id === id);
+    if (idx >= 0) {
+      currentStep = idx;
+      const step = steps[currentStep];
+      document.getElementById('stepNum').textContent = currentStep + 1;
+      document.getElementById('stepLabel').textContent = step.label;
+      document.getElementById('stepHint').textContent = step.hint;
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MODAL HELPERS
+     ═══════════════════════════════════════════════════════════ */
+  function closeAllModals() {
+    closeRequestModal();
+    closeMedRxModal();
+    closeLabRxModal();
+    closeSendDocsModal();
+  }
+
+  // Expert request modal
+  const requestModal = document.getElementById('modalRequest');
+  function openRequestModal() { requestModal.classList.add('open'); }
+  function closeRequestModal() { requestModal.classList.remove('open'); }
+  requestModal.addEventListener('click', e => { if (e.target === requestModal) closeRequestModal(); });
+
+  function sendRequest() {
+    closeRequestModal();
+    showToast('Expert opinion request sent to Dr Bernard RIVIÈRE — average response time: 15h.');
+    setTimeout(() => {
+      showDesktopNotif();
+      document.getElementById('connectBadge').style.display = 'flex';
+    }, 1800);
+  }
+
+  // Medication Rx modal
+  const medRxModal = document.getElementById('modalMedRx');
+  function openMedRxModal() { medRxModal.classList.add('open'); document.getElementById('medRxSearch').focus(); showMedSuggest(); }
+  function closeMedRxModal() { medRxModal.classList.remove('open'); document.getElementById('medRxSuggestions').style.display = 'none'; }
+  medRxModal.addEventListener('click', e => { if (e.target === medRxModal) closeMedRxModal(); });
+  function showMedSuggest() { document.getElementById('medRxSuggestions').style.display = 'block'; }
+
+  // Lab Rx modal
+  const labRxModal = document.getElementById('modalLabRx');
+  function openLabRxModal() { labRxModal.classList.add('open'); }
+  function closeLabRxModal() { labRxModal.classList.remove('open'); document.getElementById('labRxSuggestions').style.display = 'none'; }
+  labRxModal.addEventListener('click', e => { if (e.target === labRxModal) closeLabRxModal(); });
+  function showLabSuggest() { document.getElementById('labRxSuggestions').style.display = 'block'; }
+
+  // Send docs modal
+  const sendDocsModal = document.getElementById('modalSendDocs');
+  function openSendDocsModal() {
+    // Auto-create both prescriptions if empty (demo convenience)
+    if (savedDrugs.length === 0) { savedDrugs = [drugCatalog.Furosemide, drugCatalog.Ramipril]; }
+    if (savedLabTemplates.length === 0) { savedLabTemplates = [labCatalog.initial]; }
+    refreshRpBadges();
+    refreshSendCta();
+    updateSendDocsList();
+    sendDocsModal.classList.add('open');
+  }
+  function closeSendDocsModal() { sendDocsModal.classList.remove('open'); }
+  sendDocsModal.addEventListener('click', e => { if (e.target === sendDocsModal) closeSendDocsModal(); });
+
+  function sendDocsFinal() {
+    closeSendDocsModal();
+    showToast('Message sent.');
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DESKTOP NOTIFICATION
+     ═══════════════════════════════════════════════════════════ */
+  const desktopNotif = document.getElementById('desktopNotif');
+  function showDesktopNotif() {
+    desktopNotif.classList.add('show');
+    setTimeout(() => desktopNotif.classList.remove('show'), 6000);
+  }
+  function onNotifClick() {
+    desktopNotif.classList.remove('show');
+    goTo('inbox');
+    setStepFromGoTo('inbox');
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     "MORE ACTIONS" DROPDOWN
+     ═══════════════════════════════════════════════════════════ */
+  const moreActionsBtn = document.getElementById('moreActionsBtn');
+  const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+  function toggleMoreActions(e) {
+    e.stopPropagation();
+    const isOpen = moreActionsDropdown.classList.toggle('open');
+    moreActionsBtn.classList.toggle('active', isOpen);
+  }
+  function closeMoreActions() {
+    moreActionsDropdown.classList.remove('open');
+    moreActionsBtn.classList.remove('active');
+  }
+  // Close when clicking outside the button or the dropdown
+  document.addEventListener('click', e => {
+    if (!moreActionsBtn.contains(e.target) && !moreActionsDropdown.contains(e.target)) {
+      closeMoreActions();
+    }
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     PRESCRIPTION DATA
+     ═══════════════════════════════════════════════════════════ */
+  const drugCatalog = {
+    Furosemide: { name: 'Furosemide 40 mg',  detail: '1 tablet in the morning · 30 days · QSP 1 month — Loop diuretic, fluid overload management.' },
+    Ramipril:   { name: 'Ramipril 2.5 mg',   detail: '1 tablet in the morning · 30 days · QSP 1 month — ACE inhibitor; replaces Amlodipine. Titrate up at next consultation.' },
+    Bisoprolol: { name: 'Bisoprolol 2.5 mg', detail: '1 tablet in the morning · 30 days — Beta-blocker (introduce only if HR > 80 bpm and stable on ACE+diuretic).' }
+  };
+  const labCatalog = {
+    initial:    { name: 'Heart failure – Initial workup (Insuffisance cardiaque – Bilan initial)',
+                  detail: 'NT-proBNP · Sodium · Potassium · Magnesium · Creatinine + eGFR · Ferritin · TSH · Fasting glucose · HbA1c · Complete lipid panel · CBC · CRP' },
+    diagnostic: { name: 'Heart failure – Diagnostic',
+                  detail: 'NT-proBNP · BNP · Troponin · Liver enzymes · Coagulation panel' }
+  };
+
+  let pendingDrugs = [];
+  let pendingLabTemplates = [];
+  let savedDrugs = [];
+  let savedLabTemplates = [];
+
+  function addDrug(key) {
+    pendingDrugs.push(drugCatalog[key]);
+    renderMedRxLines();
+    document.getElementById('medRxSuggestions').style.display = 'none';
+    document.getElementById('medRxSearch').value = '';
+  }
+  function removePendingDrug(i) { pendingDrugs.splice(i, 1); renderMedRxLines(); }
+  function renderMedRxLines() {
+    document.getElementById('medRxLines').innerHTML = pendingDrugs.map((d, i) => `
+      <div class="rx-line">
+        <div class="rx-line-content">
+          <div class="rx-line-name">${d.name}</div>
+          <div class="rx-line-detail">${d.detail}</div>
+        </div>
+        <div class="rx-line-actions">
+          <i class="fas fa-pen rx-line-icon"></i>
+          <i class="fas fa-trash rx-line-icon" onclick="removePendingDrug(${i})"></i>
+        </div>
+      </div>
+    `).join('');
+  }
+  function confirmMedRx() {
+    if (pendingDrugs.length === 0) {
+      pendingDrugs.push(drugCatalog.Furosemide, drugCatalog.Ramipril);
+      renderMedRxLines();
+    }
+    savedDrugs = [...pendingDrugs];
+    pendingDrugs = [];
+    closeMedRxModal();
+    refreshRpBadges();
+    refreshSendCta();
+    showToast(`Medication prescription saved (${savedDrugs.length} drug${savedDrugs.length > 1 ? 's' : ''}, signed).`);
+  }
+
+  function addLabTemplate(key) {
+    pendingLabTemplates.push(labCatalog[key]);
+    renderLabRxLines();
+    document.getElementById('labRxSuggestions').style.display = 'none';
+    document.getElementById('labRxSearch').value = '';
+  }
+  function removePendingLab(i) { pendingLabTemplates.splice(i, 1); renderLabRxLines(); }
+  function renderLabRxLines() {
+    document.getElementById('labRxLines').innerHTML = pendingLabTemplates.map((t, i) => `
+      <div class="rx-line">
+        <div class="rx-line-content">
+          <div class="rx-line-name">${t.name}</div>
+          <div class="rx-line-detail">${t.detail}</div>
+        </div>
+        <div class="rx-line-actions">
+          <i class="fas fa-pen rx-line-icon"></i>
+          <i class="fas fa-trash rx-line-icon" onclick="removePendingLab(${i})"></i>
+        </div>
+      </div>
+    `).join('');
+  }
+  function confirmLabRx() {
+    if (pendingLabTemplates.length === 0) {
+      pendingLabTemplates.push(labCatalog.initial);
+      renderLabRxLines();
+    }
+    savedLabTemplates = [...pendingLabTemplates];
+    pendingLabTemplates = [];
+    closeLabRxModal();
+    refreshRpBadges();
+    refreshSendCta();
+    showToast('Lab prescription saved (signed).');
+  }
+
+  /* Update right-panel badges (count pills next to Med/Lab Rx) */
+  function refreshRpBadges() {
+    const med = document.getElementById('rpMedRxBadge');
+    if (med) med.innerHTML = savedDrugs.length ? `<span class="count-pill">${savedDrugs.length} signed</span>` : '';
+    const lab = document.getElementById('rpLabRxBadge');
+    if (lab) lab.innerHTML = savedLabTemplates.length ? `<span class="count-pill">1 signed</span>` : '';
+  }
+
+  /* Update CTA banner showing how many docs are ready to send */
+  function refreshSendCta() {
+    const banner = document.getElementById('sendCtaBanner');
+    if (!banner) return;
+    const total = (savedDrugs.length > 0 ? 1 : 0) + (savedLabTemplates.length > 0 ? 1 : 0);
+    if (total > 0) {
+      banner.style.display = 'flex';
+      const drugsLabel = savedDrugs.length > 0 ? '1 medication prescription' : '';
+      const labLabel = savedLabTemplates.length > 0 ? '1 lab prescription' : '';
+      const parts = [drugsLabel, labLabel].filter(Boolean);
+      document.getElementById('sendCtaCount').textContent = parts.join(' + ') + ' created and signed';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
+  function updateSendDocsList() {
+    const list = document.getElementById('sendDocList');
+    const count = (savedDrugs.length ? 1 : 0) + (savedLabTemplates.length ? 1 : 0);
+    document.getElementById('sharedDocCount').textContent = `${count} shared document${count !== 1 ? 's' : ''}`;
+    let html = '';
+    if (savedDrugs.length) {
+      html += `<div class="send-doc-item">
+        <input type="checkbox" checked />
+        <div class="send-doc-item-name"><i class="fas fa-prescription-bottle-medical" style="color:#107aca"></i> Medication prescription <span class="signed-tag"><i class="fas fa-shield-halved" style="font-size:8px"></i> Signed</span></div>
+        <i class="fas fa-eye" style="color:#6b7280;cursor:pointer"></i>
+        <i class="fas fa-ellipsis-vertical" style="color:#6b7280;cursor:pointer"></i>
+      </div>`;
+    }
+    if (savedLabTemplates.length) {
+      html += `<div class="send-doc-item">
+        <input type="checkbox" checked />
+        <div class="send-doc-item-name"><i class="fas fa-flask" style="color:#107aca"></i> Lab prescription – Heart failure initial workup <span class="signed-tag"><i class="fas fa-shield-halved" style="font-size:8px"></i> Signed</span></div>
+        <i class="fas fa-eye" style="color:#6b7280;cursor:pointer"></i>
+        <i class="fas fa-ellipsis-vertical" style="color:#6b7280;cursor:pointer"></i>
+      </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     TOAST
+     ═══════════════════════════════════════════════════════════ */
+  const toast = document.getElementById('toast');
+  function showToast(msg) {
+    document.getElementById('toastMsg').textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     KEYBOARD
+     ═══════════════════════════════════════════════════════════ */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeAllModals();
+      closeMoreActions();
+    }
+    if (e.key === 'ArrowRight' && e.altKey) nextStep();
+    if (e.key === 'ArrowLeft'  && e.altKey) prevStep();
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     INIT
+     ═══════════════════════════════════════════════════════════ */
+  setStep(0);
+</script>
+
+</body>
+</html>
