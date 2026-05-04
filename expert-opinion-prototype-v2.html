@@ -377,8 +377,8 @@
   .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: #16a34a; color: #fff; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); z-index: 2000; transition: transform .3s ease; max-width: 80vw; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  .desktop-notif { position: fixed; top: 14px; right: 14px; width: 360px; background: rgba(40, 40, 50, .92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 14px; padding: 14px 16px; color: #fff; box-shadow: 0 14px 36px rgba(0,0,0,.4); z-index: 3000; opacity: 0; transform: translateY(-20px); transition: opacity .3s ease, transform .3s ease; cursor: pointer; }
-  .desktop-notif.show { opacity: 1; transform: translateY(0); }
+  .desktop-notif { position: fixed; top: 14px; right: 14px; width: 360px; background: rgba(40, 40, 50, .92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-radius: 14px; padding: 14px 16px; color: #fff; box-shadow: 0 14px 36px rgba(0,0,0,.4); z-index: 3000; opacity: 0; transform: translateY(-20px); transition: opacity .3s ease, transform .3s ease; cursor: pointer; pointer-events: none; }
+  .desktop-notif.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
   .desktop-notif-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
   .desktop-notif-icon { width: 24px; height: 24px; background: #107aca; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 13px; }
   .desktop-notif-app { flex: 1; font-size: 12px; color: #b6c2d3; }
